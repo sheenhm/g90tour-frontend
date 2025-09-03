@@ -198,10 +198,15 @@ export default function ProductCard({
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                className={`${
+                                    product.isActive
+                                        ? "text-red-600 hover:text-red-700 hover:bg-red-50"
+                                        : "text-green-600 hover:text-green-700 hover:bg-green-50"
+                                }`}
                                 onClick={() => onDelete?.(product.id)}
                             >
-                                <Trash2 className="w-4 h-4" /> 비활성화
+                                <Trash2 className="w-4 h-4 mr-1" />
+                                {product.isActive ? "비활성화" : "활성화"}
                             </Button>
                         </>
                     )}

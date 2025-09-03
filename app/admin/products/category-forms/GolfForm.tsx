@@ -1,8 +1,9 @@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Plus, X } from "lucide-react"
 
-// Golf 세부 정보 타입 정의
 interface GolfDetails {
     golfClubName?: string[]
     round?: number
@@ -10,19 +11,15 @@ interface GolfDetails {
 }
 
 interface Props {
-    data: { golfDetails?: GolfDetails }
-    onChange: (data: { golfDetails: GolfDetails }) => void
+    data?: GolfDetails
+    onChange: (data: GolfDetails) => void
 }
 
 export default function GolfForm({ data, onChange }: Props) {
-    const details = data.golfDetails || {}
+    const details = data || {}
 
-    // 필드 변경 핸들러
-    const handleChange = (
-        field: keyof GolfDetails,
-        value: string | number | string[] | undefined
-    ) => {
-        onChange({ golfDetails: { ...details, [field]: value } })
+    const handleChange = (field: keyof GolfDetails, value: string | number | string[] | undefined) => {
+        onChange({ ...details, [field]: value })
     }
 
     return (
@@ -30,21 +27,40 @@ export default function GolfForm({ data, onChange }: Props) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                 {/* 골프장 이름 */}
                 <div className="md:col-span-2 space-y-2">
-                    <Label htmlFor="golfClubName">골프장 이름 (쉼표로 구분)</Label>
-                    <Input
-                        id="golfClubName"
-                        placeholder="예: 스카이힐, 블랙스톤"
-                        value={details.golfClubName?.join(", ") || ""}
-                        onChange={(e) =>
-                            handleChange(
-                                "golfClubName",
-                                e.target.value
-                                    .split(",")
-                                    .map((s) => s.trim())
-                                    .filter(Boolean)
-                            )
-                        }
-                    />
+                    <Label>골프장 이름</Label>
+                    <div className="space-y-2">
+                        {(details.golfClubName && details.golfClubName.length > 0 ? details.golfClubName : [""]).map((club, index) => (
+                            <div key={index} className="flex gap-2">
+                                <Input
+                                    value={club}
+                                    onChange={(e) => {
+                                        const newClubs = [...(details.golfClubName || [""])]
+                                        newClubs[index] = e.target.value
+                                        handleChange("golfClubName", newClubs)
+                                    }}
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => {
+                                        const newClubs = (details.golfClubName || []).filter((_, i) => i !== index)
+                                        handleChange("golfClubName", newClubs)
+                                    }}
+                                >
+                                    <X className="w-4 h-4" />
+                                </Button>
+                            </div>
+                        ))}
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleChange("golfClubName", [...(details.golfClubName || []), ""])}
+                        >
+                            <Plus className="w-4 h-4 mr-1" /> 항목 추가
+                        </Button>
+                    </div>
                 </div>
 
                 {/* 라운드 수 */}
@@ -55,7 +71,7 @@ export default function GolfForm({ data, onChange }: Props) {
                         type="number"
                         min={1}
                         placeholder="예: 2"
-                        value={details.round || ""}
+                        value={details.round ?? ""}
                         onChange={(e) =>
                             handleChange(
                                 "round",

@@ -40,18 +40,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [])
 
     const login = async (data: LoginRequest) => {
-        const response = await authApi.login(data)
-        if (response.accessToken) {
+        try {
+            await authApi.login(data)
             const userInfo = await authApi.getUserInfo()
             setUser(userInfo)
-            localStorage.setItem("user", JSON.stringify(userInfo));
+            localStorage.setItem("user", JSON.stringify(userInfo))
+        } catch (error: any) {
+            throw error
         }
     }
 
     const signup = async (data: SignupRequest) => {
-        await authApi.signup(data)
-        // 회원가입 후 자동 로그인
-        await login({ email: data.email, password: data.password })
+        try {
+            await authApi.signup(data)
+            await login({ email: data.email, password: data.password })
+        } catch (error: any) {
+            throw error
+        }
     }
 
     const logout = () => {

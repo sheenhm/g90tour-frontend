@@ -5,11 +5,18 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { UploadCloud, Image as ImageIcon, Info, Tag, DollarSign } from "lucide-react"
-
-import { Product, ProductForm as ProductFormType, Category, buildRequestFromForm, ProductRequest } from "@/lib/product"
+import { UploadCloud, Image as ImageIcon, Info, Tag, DollarSign, Plus, X } from "lucide-react"
+import {
+    Product,
+    Category,
+    ProductRequest,
+    ProductDetails,
+    buildRequestFromForm,
+    toProductForm,
+    Currency, CurrencyLabels
+} from "@/lib/product"
 
 // category별 세부 폼
 import HotelForm from "./category-forms/HotelForm"
@@ -36,28 +43,52 @@ const detailKeyMap: { [K in Category]: keyof Product } = {
     ACTIVITY: "activityDetails",
 }
 
-export default function ProductForm({ category, initialData, onSubmit, onImageUpload, onCancel }: Props) {
-    const [form, setForm] = useState<ProductFormType>(() => ({
+const defaultDetails: Record<Category, ProductDetails["details"]> = {
+    HOTEL: { capacity: 0, roomType: "" },
+    GOLF: { golfClubName: [], round: 0, difficulty: "" },
+    TOUR: { tourType: "", departurePlace: "", durationDays: 0, majorCities: [], majorSpots: [] },
+    SPA: { treatmentType: "", durationMinutes: 0, treatmentOptions: [], facilities: [] },
+    VEHICLE: { vehicleType: "", carName: "", passengerCapacity: 0, gasType: "", isDriverIncluded: false },
+    ACTIVITY: { activityType: "", reservationDeadline: "", activities: [] },
+}
+
+type FormState = Omit<ProductRequest, "category"> & {
+    category: Category
+    details: ProductDetails["details"]
+    costPrice: number
+    currency: Currency
+}
+
+export default function ProductForm<C extends Category>({
+                                                            category,
+                                                            initialData,
+                                                            onSubmit,
+                                                            onImageUpload,
+                                                            onCancel,
+                                                        }: Props) {
+    const [form, setForm] = useState<FormState>(() => ({
         name: initialData?.name || "",
         description: initialData?.description || "",
         originalPrice: initialData?.originalPrice || 0,
         salePrice: initialData?.salePrice || 0,
+        costPrice: (initialData as any)?.costPrice || 0,
+        currency: (initialData as any)?.currency || "KRW",
         location: initialData?.location || "",
         includes: initialData?.includes || [],
         imageUrl: initialData?.imageUrl || "",
+        category,
         details: initialData
-            ? (initialData[detailKeyMap[category]] as ProductFormType["details"]) || {}
-            : {},
-        category
+            ? (initialData[detailKeyMap[category]] as ProductDetails["details"])
+            : defaultDetails[category],
     }))
 
     const [isUploading, setIsUploading] = useState(false)
     const [imagePreview, setImagePreview] = useState<string | null>(initialData?.imageUrl || null)
 
-    const handleChange = <K extends keyof ProductFormType>(field: K, value: ProductFormType[K]) =>
+    const handleChange = <K extends keyof FormState>(field: K, value: FormState[K]) =>
         setForm(prev => ({ ...prev, [field]: value }))
 
-    const handleDetailChange = (detailData: ProductFormType["details"]) =>
+    const handleDetailChange = (detailData: FormState["details"]) =>
         setForm(prev => ({ ...prev, details: detailData }))
 
     const handleImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,7 +113,7 @@ export default function ProductForm({ category, initialData, onSubmit, onImageUp
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        const requestData: ProductRequest = buildRequestFromForm(form)
+        const requestData: ProductRequest = buildRequestFromForm(toProductForm(form))
         onSubmit(requestData)
     }
 
@@ -143,12 +174,30 @@ export default function ProductForm({ category, initialData, onSubmit, onImageUp
                         <Input id="location" value={form.location} onChange={e => handleChange("location", e.target.value)} />
                     </div>
                     <div>
-                        <Label htmlFor="includes">포함사항 (쉼표로 구분)</Label>
-                        <Input
-                            id="includes"
-                            value={form.includes.join(", ")}
-                            onChange={e => handleChange("includes", e.target.value.split(",").map(s => s.trim()).filter(Boolean))}
-                        />
+                        <Label>포함 사항</Label>
+                        <div className="space-y-2">
+                            {(form.includes.length > 0 ? form.includes : [""]).map((item, index) => (
+                                <div key={index} className="flex gap-2">
+                                    <Input
+                                        value={item}
+                                        onChange={(e) => {
+                                            const newIncludes = [...(form.includes.length > 0 ? form.includes : [""])]
+                                            newIncludes[index] = e.target.value
+                                            handleChange("includes", newIncludes)
+                                        }}
+                                    />
+                                    <Button type="button" variant="outline" size="icon" onClick={() => {
+                                        const newIncludes = form.includes.filter((_, i) => i !== index)
+                                        handleChange("includes", newIncludes)
+                                    }}>
+                                        <X className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            ))}
+                            <Button type="button" variant="outline" size="sm" onClick={() => handleChange("includes", [...form.includes, ""])}>
+                                <Plus className="w-4 h-4 mr-1" /> 항목 추가
+                            </Button>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -159,15 +208,120 @@ export default function ProductForm({ category, initialData, onSubmit, onImageUp
                     <CardTitle className="flex items-center gap-2">
                         <DollarSign size={20} /> 가격 정보
                     </CardTitle>
+                    <CardDescription className="text-gray-500 text-sm mt-1">
+                        고객에게 노출되는 정보입니다. '판매가' 기준으로 판매됩니다.
+                    </CardDescription>
                 </CardHeader>
                 <CardContent className="grid grid-cols-2 gap-4">
                     <div>
                         <Label htmlFor="originalPrice">정가</Label>
-                        <Input id="originalPrice" type="number" value={form.originalPrice} onChange={e => handleChange("originalPrice", +e.target.value)} />
+                        <Input
+                            id="originalPrice"
+                            type="text"
+                            value={form.originalPrice.toLocaleString()}
+                            onChange={(e) => {
+                                const numericValue = Number(e.target.value.replace(/,/g, ""));
+                                handleChange("originalPrice", isNaN(numericValue) ? 0 : numericValue);
+                            }}
+                        />
                     </div>
                     <div>
-                        <Label htmlFor="salePrice">할인가</Label>
-                        <Input id="salePrice" type="number" value={form.salePrice} onChange={e => handleChange("salePrice", +e.target.value)} />
+                        <Label htmlFor="salePrice">판매가</Label>
+                        <Input
+                            id="salePrice"
+                            type="text"
+                            value={form.salePrice.toLocaleString()}
+                            onChange={(e) => {
+                                const numericValue = Number(e.target.value.replace(/,/g, ""));
+                                handleChange("salePrice", isNaN(numericValue) ? 0 : numericValue);
+                            }}
+                        />
+                    </div>
+
+                    {/* 실시간 할인율 표시 */}
+                    <div className="col-span-2 mt-2">
+                        {form.originalPrice > 0 ? (
+                            (() => {
+                                const discount = Math.round(
+                                    ((form.originalPrice - form.salePrice) / form.originalPrice) * 100
+                                );
+
+                                let colorClass = "text-gray-600"; // 기본
+                                if (discount >= 50) colorClass = "text-red-600";
+                                else if (discount >= 30) colorClass = "text-orange-600";
+                                else if (discount >= 10) colorClass = "text-blue-600";
+
+                                return (
+                                    <p className={`text-sm font-semibold ${colorClass}`}>
+                                        할인율: {discount}%
+                                    </p>
+                                );
+                            })()
+                        ) : (
+                            <p className="text-sm text-gray-400">정가를 입력하면 할인율이 계산됩니다.</p>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* 관리자 전용 가격 정보 */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <DollarSign size={20} /> 상품 원가 (관리자 전용)
+                    </CardTitle>
+                    <CardDescription className="text-gray-500 text-sm mt-1">
+                        고객에게 보이지 않는 관리자용 정보입니다.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-2 gap-4">
+                    <div>
+                        <Label htmlFor="costPrice">원가</Label>
+                        <Input
+                            id="costPrice"
+                            type="text"
+                            value={form.costPrice.toLocaleString()}
+                            onChange={(e) => {
+                                const numericValue = Number(e.target.value.replace(/,/g, ""));
+                                handleChange("costPrice", isNaN(numericValue) ? 0 : numericValue);
+                            }}
+                        />
+                    </div>
+                    <div>
+                        <Label htmlFor="currency">화폐</Label>
+                        <select
+                            id="currency"
+                            value={form.currency}
+                            onChange={(e) => handleChange("currency", e.target.value as Currency)}
+                            className="w-full border rounded px-2 py-1"
+                        >
+                            {Object.entries(CurrencyLabels).map(([key, label]) => (
+                                <option key={key} value={key}>
+                                    {label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* 1개 판매 시 남는 이익 */}
+                    <div className="col-span-2 mt-2">
+                        {form.salePrice > 0 ? (
+                            (() => {
+                                const profit = form.salePrice - form.costPrice;
+                                let colorClass = "text-gray-600"; // 기본
+                                if (profit >= 100000) colorClass = "text-green-600";
+                                else if (profit > 0) colorClass = "text-blue-600";
+                                else colorClass = "text-red-600"; // 손해
+
+                                return (
+                                    <p className={`text-sm font-semibold ${colorClass}`}>
+                                        1개 판매 시 예상 이익: {profit.toLocaleString()} {form.currency}
+                                    </p>
+                                );
+                            })()
+                        ) : (
+                            <p className="text-sm text-gray-400">판매가를 입력하면 이익이 계산됩니다.</p>
+                        )}
                     </div>
                 </CardContent>
             </Card>

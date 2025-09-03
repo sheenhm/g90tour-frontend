@@ -113,6 +113,7 @@ export interface User { id: string; email: string; name: string; phone: string; 
 export interface LoginRequest { email: string; password: string; }
 export interface LoginResponse { grantType: string; accessToken: string; }
 export interface SignupRequest { email: string; password: string; name: string; phone: string; birth: string; gender: "MALE" | "FEMALE"; }
+export interface SignupResponse { message: string }
 export interface MyPageInfo { userId: string; name: string; email: string; phone: string; birth: string; gender: "MALE" | "FEMALE"; grade: string; totalSpent: number; totalBookings: number; bookingHistory: BookingResponse[]; }
 export interface Coupon { description: string; discountType: "FIXED_AMOUNT" | "PERCENTAGE"; discountAmount: number; discountRate: number; maxDiscountAmount: number; status: "ACTIVE" | "EXPIRED" | "USED" | "REVOKED"; expiryDate: string; }
 export interface MyCoupon { userCouponId: number; coupon: Coupon }
@@ -134,7 +135,7 @@ export const authApi = {
         apiClient.setToken(res.accessToken);
         return res;
     },
-    signup: (data: SignupRequest) => apiClient.post<void>("/api/v1/users/signup", data),
+    signup: (data: SignupRequest) => apiClient.post<SignupResponse>("/api/v1/users/signup", data),
     getUserInfo: () => apiClient.get<User>("/api/v1/users/me"),
     updatePhone: (userId: string, phone: string) => apiClient.put<void>(`/api/v1/users/${userId}/phone`, { phone }),
     changePassword: (userId: string, data: { currentPassword: string; newPassword: string }) => apiClient.patch<void>(`/api/v1/users/${userId}/password`, data),

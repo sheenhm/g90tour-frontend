@@ -3,6 +3,16 @@ import { apiClient, PagedResponse, SearchParams, Review, ReviewRequest } from "@
 export type Category = "HOTEL" | "GOLF" | "TOUR" | "SPA" | "VEHICLE" | "ACTIVITY";
 export type Currency = "KRW" | "USD" | "VND" | "JPY" | "EUR" | "THB" | "CNY";
 
+export const CurrencyLabels: Record<Currency, string> = {
+    KRW: "한국 원",
+    USD: "미국 달러",
+    VND: "베트남 동",
+    JPY: "일본 엔",
+    EUR: "유로",
+    THB: "태국 바트",
+    CNY: "중국 위안",
+};
+
 // 공용 Product 타입
 export interface Product {
     id: string;
@@ -43,18 +53,11 @@ export type ProductDetails =
     | { category: "ACTIVITY"; details: ActivityDetails };
 
 
-export type ProductRequest = Omit<Product, 'id' | 'createdAt' | 'isActive' | 'rating'>;
+export type ProductRequest = Omit<Product, 'id' | 'createdAt' | 'isActive' | 'rating'> & {
+    costPrice: number
+    currency: string
+}
 export type ProductForm = Omit<ProductRequest, "category"> & ProductDetails;
-
-export const emptyPagedResponse = <T>(): PagedResponse<T> => ({
-    content: [],
-    pageNumber: 0,
-    pageSize: 0,
-    totalPages: 0,
-    totalElements: 0,
-    isFirst: true,
-    isLast: true,
-});
 
 export const buildRequestFromForm = (form: ProductForm): ProductRequest => {
     const baseRequest: ProductRequest = {
@@ -66,6 +69,8 @@ export const buildRequestFromForm = (form: ProductForm): ProductRequest => {
         includes: form.includes,
         imageUrl: form.imageUrl,
         category: form.category,
+        costPrice: form.costPrice,
+        currency: form.currency,
     };
 
     const categoryKeyMap: Record<Category, keyof ProductRequest> = {
@@ -80,6 +85,30 @@ export const buildRequestFromForm = (form: ProductForm): ProductRequest => {
     const key = categoryKeyMap[form.category];
     return key ? { ...baseRequest, [key]: form.details || {} } : baseRequest;
 };
+
+// formState를 ProductForm으로 변환
+export const toProductForm = (form: Omit<ProductRequest, "category"> & {
+    category: Category
+    details: ProductDetails["details"]
+    costPrice: number
+    currency: string
+}): ProductForm => {
+    const categoryKeyMap: Record<Category, keyof ProductRequest> = {
+        HOTEL: "hotelDetails",
+        GOLF: "golfDetails",
+        TOUR: "tourDetails",
+        SPA: "spaDetails",
+        VEHICLE: "vehicleDetails",
+        ACTIVITY: "activityDetails",
+    }
+
+    const key = categoryKeyMap[form.category]
+
+    return {
+        ...form,
+        [key]: form.details,
+    } as ProductForm
+}
 
 // 일반 사용자용 상품 API
 export const productApi = {

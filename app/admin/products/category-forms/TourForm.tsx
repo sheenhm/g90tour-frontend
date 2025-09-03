@@ -1,6 +1,8 @@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Plus, X } from "lucide-react"
 
 // Tour 세부 정보 타입 정의
 interface TourDetails {
@@ -12,19 +14,18 @@ interface TourDetails {
 }
 
 interface Props {
-    data: { tourDetails?: TourDetails }
-    onChange: (data: { tourDetails: TourDetails }) => void
+    data?: TourDetails
+    onChange: (data: TourDetails) => void
 }
 
 export default function TourForm({ data, onChange }: Props) {
-    const details = data.tourDetails || {}
+    const details = data || {}
 
-    // 필드 변경 핸들러
     const handleChange = (
         field: keyof TourDetails,
         value: string | number | string[] | undefined
     ) => {
-        onChange({ tourDetails: { ...details, [field]: value } })
+        onChange({ ...details, [field]: value })
     }
 
     return (
@@ -35,7 +36,6 @@ export default function TourForm({ data, onChange }: Props) {
                     <Label htmlFor="tourType">투어 타입</Label>
                     <Input
                         id="tourType"
-                        placeholder="예: 자유 여행, 패키지"
                         value={details.tourType || ""}
                         onChange={(e) => handleChange("tourType", e.target.value)}
                     />
@@ -46,7 +46,6 @@ export default function TourForm({ data, onChange }: Props) {
                     <Label htmlFor="departurePlace">출발 장소</Label>
                     <Input
                         id="departurePlace"
-                        placeholder="예: 인천 국제공항"
                         value={details.departurePlace || ""}
                         onChange={(e) => handleChange("departurePlace", e.target.value)}
                     />
@@ -58,8 +57,6 @@ export default function TourForm({ data, onChange }: Props) {
                     <Input
                         id="durationDays"
                         type="number"
-                        min={1}
-                        placeholder="예: 7"
                         value={details.durationDays || ""}
                         onChange={(e) =>
                             handleChange(
@@ -72,40 +69,58 @@ export default function TourForm({ data, onChange }: Props) {
 
                 {/* 주요 도시 */}
                 <div className="space-y-2">
-                    <Label htmlFor="majorCities">주요 도시 (쉼표로 구분)</Label>
-                    <Input
-                        id="majorCities"
-                        placeholder="예: 파리, 로마, 바르셀로나"
-                        value={details.majorCities?.join(", ") || ""}
-                        onChange={(e) =>
-                            handleChange(
-                                "majorCities",
-                                e.target.value
-                                    .split(",")
-                                    .map((s) => s.trim())
-                                    .filter(Boolean)
-                            )
-                        }
-                    />
+                    <Label>주요 도시</Label>
+                    {(details.majorCities?.length ? details.majorCities : [""]).map((item, index) => (
+                        <div key={index} className="flex gap-2">
+                            <Input
+                                value={item}
+                                onChange={(e) => {
+                                    const newCities = [...(details.majorCities || [""])]
+                                    newCities[index] = e.target.value
+                                    handleChange("majorCities", newCities)
+                                }}
+                            />
+                            <Button type="button" size="icon" variant="outline" onClick={() => {
+                                const newCities = (details.majorCities || []).filter((_, i) => i !== index)
+                                handleChange("majorCities", newCities)
+                            }}>
+                                <X className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    ))}
+                    <Button type="button" size="sm" variant="outline" onClick={() => {
+                        handleChange("majorCities", [...(details.majorCities || []), ""])
+                    }}>
+                        <Plus className="w-4 h-4 mr-1" /> 항목 추가
+                    </Button>
                 </div>
 
                 {/* 주요 명소 */}
                 <div className="md:col-span-2 space-y-2">
-                    <Label htmlFor="majorSpots">주요 명소 (쉼표로 구분)</Label>
-                    <Input
-                        id="majorSpots"
-                        placeholder="예: 에펠탑, 콜로세움"
-                        value={details.majorSpots?.join(", ") || ""}
-                        onChange={(e) =>
-                            handleChange(
-                                "majorSpots",
-                                e.target.value
-                                    .split(",")
-                                    .map((s) => s.trim())
-                                    .filter(Boolean)
-                            )
-                        }
-                    />
+                    <Label>주요 명소</Label>
+                    {(details.majorSpots?.length ? details.majorSpots : [""]).map((item, index) => (
+                        <div key={index} className="flex gap-2">
+                            <Input
+                                value={item}
+                                onChange={(e) => {
+                                    const newSpots = [...(details.majorSpots || [""])]
+                                    newSpots[index] = e.target.value
+                                    handleChange("majorSpots", newSpots)
+                                }}
+                            />
+                            <Button type="button" size="icon" variant="outline" onClick={() => {
+                                const newSpots = (details.majorSpots || []).filter((_, i) => i !== index)
+                                handleChange("majorSpots", newSpots)
+                            }}>
+                                <X className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    ))}
+                    <Button type="button" size="sm" variant="outline" onClick={() => {
+                        handleChange("majorSpots", [...(details.majorSpots || []), ""])
+                    }}>
+                        <Plus className="w-4 h-4 mr-1" /> 항목 추가
+                    </Button>
                 </div>
             </div>
         </CardContent>

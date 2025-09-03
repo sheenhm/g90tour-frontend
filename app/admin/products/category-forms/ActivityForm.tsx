@@ -10,19 +10,15 @@ interface ActivityDetails {
 }
 
 interface Props {
-    data: { activityDetails?: ActivityDetails }
-    onChange: (data: { activityDetails: ActivityDetails }) => void
+    data?: ActivityDetails
+    onChange: (data: ActivityDetails) => void
 }
 
 export default function ActivityForm({ data, onChange }: Props) {
-    const details = data.activityDetails || {}
+    const details = data || {}
 
-    // 필드 변경 핸들러
-    const handleChange = (
-        field: keyof ActivityDetails,
-        value: string | string[] | undefined
-    ) => {
-        onChange({ activityDetails: { ...details, [field]: value } })
+    const handleChange = (field: keyof ActivityDetails, value: string | string[] | undefined) => {
+        onChange({ ...details, [field]: value })
     }
 
     return (

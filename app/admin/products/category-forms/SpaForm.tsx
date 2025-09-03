@@ -1,6 +1,8 @@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Plus, X } from "lucide-react"
 
 // Spa 세부 정보 타입 정의
 interface SpaDetails {
@@ -11,19 +13,18 @@ interface SpaDetails {
 }
 
 interface Props {
-    data: { spaDetails?: SpaDetails }
-    onChange: (data: { spaDetails: SpaDetails }) => void
+    data?: SpaDetails
+    onChange: (data: SpaDetails) => void
 }
 
 export default function SpaForm({ data, onChange }: Props) {
-    const details = data.spaDetails || {}
+    const details = data || {}
 
-    // 필드 변경 핸들러
     const handleChange = (
         field: keyof SpaDetails,
         value: string | number | string[] | undefined
     ) => {
-        onChange({ spaDetails: { ...details, [field]: value } })
+        onChange({ ...details, [field]: value })
     }
 
     return (
@@ -60,41 +61,59 @@ export default function SpaForm({ data, onChange }: Props) {
                 </div>
 
                 {/* 옵션 */}
-                <div className="space-y-2">
-                    <Label htmlFor="treatmentOptions">옵션 (쉼표로 구분)</Label>
-                    <Input
-                        id="treatmentOptions"
-                        placeholder="예: 핫스톤, 아로마 오일"
-                        value={details.treatmentOptions?.join(", ") || ""}
-                        onChange={(e) =>
-                            handleChange(
-                                "treatmentOptions",
-                                e.target.value
-                                    .split(",")
-                                    .map((s) => s.trim())
-                                    .filter(Boolean)
-                            )
-                        }
-                    />
+                <div className="md:col-span-1 space-y-2">
+                    <Label>옵션</Label>
+                    {(details.treatmentOptions?.length ? details.treatmentOptions : [""]).map((item, index) => (
+                        <div key={index} className="flex gap-2">
+                            <Input
+                                value={item}
+                                onChange={(e) => {
+                                    const newOptions = [...(details.treatmentOptions || [""])]
+                                    newOptions[index] = e.target.value
+                                    handleChange("treatmentOptions", newOptions)
+                                }}
+                            />
+                            <Button type="button" size="icon" variant="outline" onClick={() => {
+                                const newOptions = (details.treatmentOptions || []).filter((_, i) => i !== index)
+                                handleChange("treatmentOptions", newOptions)
+                            }}>
+                                <X className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    ))}
+                    <Button type="button" size="sm" variant="outline" onClick={() => {
+                        handleChange("treatmentOptions", [...(details.treatmentOptions || []), ""])
+                    }}>
+                        <Plus className="w-4 h-4 mr-1" /> 항목 추가
+                    </Button>
                 </div>
 
                 {/* 시설 */}
-                <div className="space-y-2">
-                    <Label htmlFor="facilities">시설 (쉼표로 구분)</Label>
-                    <Input
-                        id="facilities"
-                        placeholder="예: 사우나, 자쿠지, 휴게실"
-                        value={details.facilities?.join(", ") || ""}
-                        onChange={(e) =>
-                            handleChange(
-                                "facilities",
-                                e.target.value
-                                    .split(",")
-                                    .map((s) => s.trim())
-                                    .filter(Boolean)
-                            )
-                        }
-                    />
+                <div className="md:col-span-1 space-y-2">
+                    <Label>시설</Label>
+                    {(details.facilities?.length ? details.facilities : [""]).map((item, index) => (
+                        <div key={index} className="flex gap-2">
+                            <Input
+                                value={item}
+                                onChange={(e) => {
+                                    const newFacilities = [...(details.facilities || [""])]
+                                    newFacilities[index] = e.target.value
+                                    handleChange("facilities", newFacilities)
+                                }}
+                            />
+                            <Button type="button" size="icon" variant="outline" onClick={() => {
+                                const newFacilities = (details.facilities || []).filter((_, i) => i !== index)
+                                handleChange("facilities", newFacilities)
+                            }}>
+                                <X className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    ))}
+                    <Button type="button" size="sm" variant="outline" onClick={() => {
+                        handleChange("facilities", [...(details.facilities || []), ""])
+                    }}>
+                        <Plus className="w-4 h-4 mr-1" /> 항목 추가
+                    </Button>
                 </div>
             </div>
         </CardContent>

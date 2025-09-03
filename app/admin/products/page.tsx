@@ -107,16 +107,19 @@ export default function AdminProductsPage() {
         }
     }
 
-    // 4. 상품 비활성화 (삭제)
-    const handleDeleteProduct = async (productId: string) => {
-        if (!confirm("정말로 이 상품을 비활성화 처리 하시겠습니까?")) return
+    // 4. 상품 활성화 상태 변경
+    const handleToggleActive = async (productId: string) => {
         try {
-            await adminProductApi.delete(productId)
-            setProducts((prev) => prev.filter((p) => p.id !== productId))
+            await adminProductApi.toggleActive(productId);
+            setProducts(prev =>
+                prev.map(p =>
+                    p.id === productId ? { ...p, isActive: !p.isActive } : p
+                )
+            );
         } catch (error) {
-            console.error("상품 비활성화 실패:", error)
+            console.error("상태 변경 실패:", error);
         }
-    }
+    };
 
     // 5. 이미지 업로드
     const handleImageUpload = async (file: File, path: string): Promise<string> => {
@@ -204,7 +207,7 @@ export default function AdminProductsPage() {
                         product={product}
                         isAdmin
                         onEdit={() => handleEditClick(product)}
-                        onDelete={() => handleDeleteProduct(product.id)}
+                        onDelete={() => handleToggleActive(product.id)}
                     />
                 ))}
             </div>

@@ -55,7 +55,7 @@ export const adminProductApi = {
         apiClient.get<PagedResponse<Product>>(`/api/v1/admin/products/search?${toQueryString(params)}`),
     create: (product: FormData) => apiClient.post<Product>("/api/v1/admin/products", product),
     update: (id: string, product: FormData) => apiClient.put<Product>(`/api/v1/admin/products/${id}`, product),
-    delete: (id: string) => apiClient.delete(`/api/v1/admin/products/${id}`),
+    toggleActive: (id: string) => apiClient.delete(`/api/v1/admin/products/${id}`),
 };
 
 export const adminFileApi = {
