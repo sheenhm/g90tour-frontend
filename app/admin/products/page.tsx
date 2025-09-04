@@ -25,7 +25,7 @@ import ProductCard from "@/components/MainProductCard"
 const categoryInfo = {
     HOTEL: { icon: <Hotel className="w-8 h-8 mb-2" />, label: "호텔" },
     GOLF: { icon: <TreePine className="w-8 h-8 mb-2" />, label: "골프" },
-    TOUR: { icon: <Mountain className="w-8 h-8 mb-2" />, label: "투어" },
+    TOUR: { icon: <Mountain className="w-8 h-8 mb-2" />, label: "패키지" },
     SPA: { icon: <Waves className="w-8 h-8 mb-2" />, label: "스파" },
     VEHICLE: { icon: <Car className="w-8 h-8 mb-2" />, label: "차량" },
     ACTIVITY: { icon: <Ticket className="w-8 h-8 mb-2" />, label: "액티비티" },
