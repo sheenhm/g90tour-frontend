@@ -64,10 +64,10 @@ export default function AdminPage() {
                         ))
                     ) : (
                         <>
-                            <StatCard title="총 회원수" value={summary?.totalUsers} change={`+${summary?.newUsersLast7Days}`} icon={Users} color="text-blue-600" />
-                            <StatCard title="총 예약" value={summary?.totalBookings} change={`+${summary?.newBookingsLast7Days}`} icon={Calendar} color="text-green-600" />
-                            <StatCard title="총 매출" value={`₩${summary?.totalRevenue.toLocaleString()}`} change={`+₩${summary?.revenueLast7Days.toLocaleString()}`} icon={DollarSign} color="text-purple-600" />
-                            <StatCard title="판매 중인 상품" value={summary?.activeProducts} icon={Package} color="text-orange-600" />
+                            <StatCard title="총 회원수" value={`${summary?.totalUsers}명`} change={`+${summary?.newUsersLast7Days}명`} icon={Users} color="text-blue-600" />
+                            <StatCard title="총 예약" value={`${summary?.totalBookings}건`} change={`+${summary?.newBookingsLast7Days}건`} icon={Calendar} color="text-green-600" />
+                            <StatCard title="총 매출" value={`${summary?.totalRevenue.toLocaleString()}원`} change={`+${summary?.revenueLast7Days.toLocaleString()}원`} icon={DollarSign} color="text-purple-600" />
+                            <StatCard title="판매 중인 상품" value={`${summary?.activeProducts}개`} icon={Package} color="text-orange-600" />
                         </>
                     )}
                 </div>
