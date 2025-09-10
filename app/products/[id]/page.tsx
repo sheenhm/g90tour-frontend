@@ -386,6 +386,81 @@ export default function ProductDetailPage() {
                         </Card>
                     </div>
                 </div>
+
+                <Card className="mt-8">
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle className="text-navy-900 flex items-center gap-2">
+                                    <MessageSquare className="w-5 h-5" />
+                                    리뷰 ({reviews.length})
+                                </CardTitle>
+                                <CardDescription>다른 고객들의 후기를 확인해보세요</CardDescription>
+                            </div>
+                            {isAuthenticated && (
+                                <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button variant="outline">리뷰 작성</Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>리뷰 작성</DialogTitle>
+                                            <DialogDescription>{product.name}에 대한 후기를 남겨주세요</DialogDescription>
+                                        </DialogHeader>
+                                        <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <Label>평점</Label>
+                                                <div className="flex items-center gap-1">{renderRatingSelector()}</div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="review-content">리뷰 내용</Label>
+                                                <Textarea
+                                                    id="review-content"
+                                                    placeholder="여행 경험을 자세히 알려주세요..."
+                                                    value={reviewData.content}
+                                                    onChange={(e) => setReviewData({ ...reviewData, content: e.target.value })}
+                                                    rows={4}
+                                                />
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <Button onClick={handleReviewSubmit} className="bg-navy-600 hover:bg-navy-700">
+                                                    리뷰 등록
+                                                </Button>
+                                                <Button variant="outline" onClick={() => setReviewDialogOpen(false)}>
+                                                    취소
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
+                            )}
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            {reviews.map((review) => (
+                                <div key={review.id} className="border-b pb-4 last:border-b-0">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-medium text-navy-900">{review.authorName}</span>
+                                            <div className="flex items-center gap-1">{renderStars(review.rating)}</div>
+                                        </div>
+                                        <span className="text-sm text-gray-500">{new Date(review.createdAt).toLocaleDateString()}</span>
+                                    </div>
+                                    <p className="text-gray-700 leading-relaxed">{review.content}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        {reviews.length === 0 && (
+                            <div className="text-center py-12">
+                                <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                <p className="text-gray-500 mb-4">아직 리뷰가 없습니다.</p>
+                                <p className="text-sm text-gray-400">첫 번째 리뷰를 작성해보세요!</p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
         </div>
     )
