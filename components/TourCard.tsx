@@ -28,7 +28,7 @@ export default function TourCard({ product }: { product: Product }) {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1 text-gray-600">
                         <MapPin className="w-4 h-4" />
-                        <span className="text-sm">{product.tourDetails?.majorCities.join(", ")}</span>
+                        <span className="text-sm">{product.location}</span>
                     </div>
                     <div className="flex items-center gap-1">
                         <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
@@ -41,9 +41,13 @@ export default function TourCard({ product }: { product: Product }) {
 
             <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                         <Calendar className="w-4 h-4 text-teal-600" />
                         <span>{product.tourDetails?.durationDays}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Plane className="w-4 h-4 text-navy-600" />
+                        <span>{product.tourDetails?.departurePlace}</span>
                     </div>
                 </div>
 
@@ -90,9 +94,9 @@ export default function TourCard({ product }: { product: Product }) {
                         </div>
                         <span className="text-sm text-gray-600">1인 기준</span>
                     </div>
-                    <Link href={`/booking?type=tour&id=${product.id}`}>
-                        <Button className="bg-teal-600 hover:bg-teal-700">견적 요청</Button>
-                    </Link>
+                    <Button asChild className="bg-teal-600 hover:bg-teal-700">
+                        <Link href={`/products/${product.id}`}>상세보기</Link>
+                    </Button>
                 </div>
             </CardContent>
         </Card>

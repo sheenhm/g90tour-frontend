@@ -95,9 +95,9 @@ export default function VehicleCard({ product }: { product: Product }) {
                         <span className="text-sm text-gray-600">1일 기준</span>
                     </div>
 
-                    <Link href={`/booking?type=vehicle&id=${product.id}`}>
-                        <Button className="bg-teal-600 hover:bg-teal-700">견적 요청</Button>
-                    </Link>
+                    <Button asChild className="bg-teal-600 hover:bg-teal-700">
+                        <Link href={`/products/${product.id}`}>상세보기</Link>
+                    </Button>
                 </div>
             </CardContent>
         </Card>
