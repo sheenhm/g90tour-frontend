@@ -6,107 +6,57 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Search, Clock, CreditCard, Check, X, Eye, User, MapPin } from "lucide-react"
-import { adminBookingApi, Booking } from "@/lib/admin"
+import { Search, Clock, CreditCard, Check, X } from "lucide-react"
+import { adminBookingApi, Booking, BookingSearchParams } from "@/lib/admin"
+import { BookingCard } from "@/app/admin/bookings/BookingCard"
+import { Skeleton } from "@/components/ui/skeleton"
 
-// UI → API 상태 매핑
-const uiToApiStatus: Record<string, Booking["status"]> = {
-    "견적요청": "QUOTE_REQUESTED",
-    "결제대기": "PAYMENT_PENDING",
-    "결제완료": "PAYMENT_COMPLETED",
-    "취소요청": "CANCEL_PENDING",
-    "취소완료": "CANCELLED",
-}
+// --- 상태 정의 ---
+const BOOKING_STATUSES = [
+    { ui: "견적요청", api: "QUOTE_REQUESTED", color: "bg-blue-600", icon: Clock },
+    { ui: "결제대기", api: "PAYMENT_PENDING", color: "bg-yellow-600", icon: CreditCard },
+    { ui: "결제완료", api: "PAYMENT_COMPLETED", color: "bg-green-600", icon: Check },
+    { ui: "취소요청", api: "CANCEL_PENDING", color: "bg-orange-600", icon: X },
+    { ui: "취소완료", api: "CANCELLED", color: "bg-gray-600", icon: X },
+    { ui: "여행완료", api: "TRAVEL_COMPLETED", color: "bg-purple-600", icon: Check },
+] as const
 
-// API → UI 한글 표시
-const apiToUiStatus: Record<Booking["status"], string> = {
-    "QUOTE_REQUESTED": "견적요청",
-    "PAYMENT_PENDING": "결제대기",
-    "PAYMENT_COMPLETED": "결제완료",
-    "CANCEL_PENDING": "취소요청",
-    "CANCELLED": "취소완료",
-    "TRAVEL_COMPLETED": "여행완료",
-}
+type BookingApiStatus = typeof BOOKING_STATUSES[number]["api"]
+type BookingUiStatus = typeof BOOKING_STATUSES[number]["ui"]
 
-// 상태별 색상/아이콘
-const statusMap: Record<Booking["status"], { color: string; icon: any }> = {
-    "QUOTE_REQUESTED": { color: "bg-blue-600", icon: Clock },
-    "PAYMENT_PENDING": { color: "bg-yellow-600", icon: CreditCard },
-    "PAYMENT_COMPLETED": { color: "bg-green-600", icon: Check },
-    "CANCEL_PENDING": { color: "bg-orange-600", icon: X },
-    "CANCELLED": { color: "bg-gray-600", icon: X },
-    "TRAVEL_COMPLETED": { color: "bg-purple-600", icon: Check },
-}
-
-const BookingCard = ({ booking }: { booking: Booking }) => {
-    const { color: statusColor, icon: StatusIcon } = statusMap[booking.status] || { color: "bg-gray-600", icon: Clock }
-
-    return (
-        <Card>
-            <CardHeader>
-                <div className="flex justify-between items-start">
-                    <div>
-                        <CardTitle>{booking.id} - {booking.customerName}</CardTitle>
-                        <CardDescription>{booking.productName}</CardDescription>
-                    </div>
-                    <Badge className={statusColor}>
-                        <StatusIcon className="w-3 h-3 mr-1" />
-                        {apiToUiStatus[booking.status]}
-                    </Badge>
-                </div>
-            </CardHeader>
-            <CardContent>
-                <p>여행일: {booking.travelDate}</p>
-                <p>인원: {booking.travelers}명</p>
-                <p>금액: {booking.totalPrice.toLocaleString()}원</p>
-
-                {booking.status === "QUOTE_REQUESTED" && (
-                    <Button
-                        size="sm"
-                        className="bg-green-600 hover:bg-green-700"
-                        onClick={() => adminBookingApi.approve(booking.id)}
-                    >
-                        승인
-                    </Button>
-                )}
-                {booking.status === "CANCEL_PENDING" && (
-                    <Button
-                        size="sm"
-                        className="bg-orange-600 hover:bg-orange-700"
-                        onClick={() => adminBookingApi.confirmCancellation(booking.id)}
-                    >
-                        취소 승인
-                    </Button>
-                )}
-            </CardContent>
-        </Card>
-    )
-}
+const uiToApiStatus = Object.fromEntries(BOOKING_STATUSES.map(s => [s.ui, s.api])) as Record<BookingUiStatus, BookingApiStatus>
+const apiToUiStatus = Object.fromEntries(BOOKING_STATUSES.map(s => [s.api, s.ui])) as Record<BookingApiStatus, BookingUiStatus>
 
 export default function AdminBookingsPage() {
     const [bookings, setBookings] = useState<Booking[]>([])
     const [searchTerm, setSearchTerm] = useState("")
+    const [activeStatus, setActiveStatus] = useState<BookingUiStatus>("견적요청")
+    const [loading, setLoading] = useState(false)
 
-    const fetchBookings = async () => {
-        const data = await adminBookingApi.getRecent(0, 50)
-        setBookings(data)
+    // --- 예약 데이터 가져오기 ---
+    const fetchBookings = async (status: BookingUiStatus, query: string = "") => {
+        setLoading(true)
+        try {
+            const params: BookingSearchParams = {
+                status: uiToApiStatus[status],
+                page: 0,
+                size: 50,
+            }
+            if (query.trim()) (params as any).query = query.trim()
+            const res = await adminBookingApi.search(params)
+            setBookings(res.content)
+        } finally {
+            setLoading(false)
+        }
     }
 
     useEffect(() => {
-        fetchBookings()
-    }, [])
+        fetchBookings(activeStatus, searchTerm)
+    }, [activeStatus, searchTerm])
 
-    const filteredBookings = (uiStatus: string) => {
-        const apiStatus = uiToApiStatus[uiStatus]
-        return bookings
-            .filter(b => b.status === apiStatus)
-            .filter(
-                b =>
-                    b.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    b.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    b.productName.toLowerCase().includes(searchTerm.toLowerCase())
-            )
-    }
+    // --- 상태별 개수 계산 ---
+    const countByStatus = (statusApi: BookingApiStatus) =>
+        bookings.filter(b => b.status === statusApi).length
 
     return (
         <div>
@@ -115,48 +65,57 @@ export default function AdminBookingsPage() {
                 <p className="text-gray-600">예약 상태별로 관리하고 처리하세요</p>
             </div>
 
+            {/* 검색 */}
             <Card className="mb-6">
-                <CardContent className="p-6">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                        <Input
-                            placeholder="예약번호, 고객명, 상품명으로 검색..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10"
-                        />
-                    </div>
+                <CardContent className="p-6 relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input
+                        placeholder="예약번호, 고객명, 상품명으로 검색..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                    />
                 </CardContent>
             </Card>
 
-            <Tabs defaultValue="견적요청" className="w-full">
-                <TabsList className="grid w-full grid-cols-5">
-                    {Object.keys(uiToApiStatus).map((uiStatus) => (
-                        <TabsTrigger key={uiStatus} value={uiStatus} className="flex items-center gap-2">
-                            {uiStatus === "견적요청" && <Clock className="w-4 h-4" />}
-                            {uiStatus === "결제대기" && <CreditCard className="w-4 h-4" />}
-                            {uiStatus === "결제완료" && <Check className="w-4 h-4" />}
-                            {uiStatus === "취소요청" && <X className="w-4 h-4" />}
-                            {uiStatus === "취소완료" && <X className="w-4 h-4" />}
-                            {uiStatus} ({filteredBookings(uiStatus).length})
+            {/* 상태별 탭 */}
+            <Tabs value={activeStatus} onValueChange={(v) => setActiveStatus(v as BookingUiStatus)} className="w-full">
+                <TabsList className="grid w-full grid-cols-6">
+                    {BOOKING_STATUSES.map((status) => (
+                        <TabsTrigger key={status.ui} value={status.ui} className="flex items-center gap-2">
+                            <status.icon className="w-4 h-4" />
+                            {status.ui} ({countByStatus(status.api)})
                         </TabsTrigger>
                     ))}
                 </TabsList>
 
-                {Object.keys(uiToApiStatus).map((uiStatus) => (
-                    <TabsContent key={uiStatus} value={uiStatus} className="mt-6">
-                        <div className="space-y-4">
-                            {filteredBookings(uiStatus).map((booking) => (
-                                <BookingCard key={booking.id} booking={booking} />
-                            ))}
-                            {filteredBookings(uiStatus).length === 0 && (
-                                <Card>
-                                    <CardContent className="p-12 text-center">
-                                        <p className="text-gray-500">{uiStatus} 상태의 예약이 없습니다.</p>
-                                    </CardContent>
-                                </Card>
-                            )}
-                        </div>
+                {BOOKING_STATUSES.map((status) => (
+                    <TabsContent key={status.ui} value={status.ui} className="mt-6">
+                        {loading ? (
+                            <div className="space-y-4">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                    <Skeleton key={i} className="h-32 w-full rounded-lg" />
+                                ))}
+                            </div>
+                        ) : bookings.length > 0 ? (
+                            <div className="space-y-4">
+                                {bookings
+                                    .filter(b => b.status === uiToApiStatus[status.ui])
+                                    .map((booking) => (
+                                        <BookingCard
+                                            key={booking.bookingId}
+                                            booking={booking}
+                                            onRefresh={() => fetchBookings(activeStatus, searchTerm)}
+                                        />
+                                    ))}
+                            </div>
+                        ) : (
+                            <Card>
+                                <CardContent className="p-12 text-center">
+                                    <p className="text-gray-500">{status.ui} 상태의 예약이 없습니다.</p>
+                                </CardContent>
+                            </Card>
+                        )}
                     </TabsContent>
                 ))}
             </Tabs>

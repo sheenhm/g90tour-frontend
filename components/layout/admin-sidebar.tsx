@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import {useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -15,48 +15,12 @@ import {
   ChevronDown,
   ChevronRight,
 } from "lucide-react"
-
-const menuItems = [
-  {
-    title: "대시보드",
-    href: "/admin",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "상품 관리",
-    href: "/admin/products",
-    icon: Package,
-  },
-  {
-    title: "예약 관리",
-    href: "/admin/bookings",
-    icon: Calendar,
-    badge: "12",
-  },
-  {
-    title: "회원 관리",
-    href: "/admin/users",
-    icon: Users,
-  },
-  {
-    title: "고객센터",
-    icon: MessageSquare,
-    children: [
-      { title: "공지사항", href: "/admin/support/notices" },
-      { title: "문의 관리", href: "/admin/support/inquiries", badge: "5" },
-      { title: "FAQ 관리", href: "/admin/support/faq" }
-    ],
-  },
-  {
-    title: "통계 분석",
-    href: "/admin/analytics",
-    icon: BarChart3,
-  },
-]
+import {adminBookingApi} from "@/lib/admin";
 
 export default function AdminSidebar() {
   const pathname = usePathname()
   const [expandedItems, setExpandedItems] = useState<string[]>(["고객센터"])
+  const [quoteRequestCount, setQuoteRequestCount] = useState(0)
 
   const toggleExpanded = (title: string) => {
     setExpandedItems((prev) => (prev.includes(title) ? prev.filter((item) => item !== title) : [...prev, title]))
@@ -65,6 +29,56 @@ export default function AdminSidebar() {
   const isActive = (href: string) => {
     return pathname === href || (href !== "/admin" && pathname.startsWith(href))
   }
+
+    useEffect(() => {
+        const fetchQuoteRequests = async () => {
+            try {
+                const res = await adminBookingApi.search({ status: "QUOTE_REQUESTED", page: 0, size: 1 })
+                setQuoteRequestCount(res.totalElements ?? res.content.length)
+            } catch (err) {
+                console.error("견적 요청 예약 건수 조회 실패", err)
+            }
+        }
+        fetchQuoteRequests()
+    }, [])
+
+    const menuItems = [
+        {
+            title: "대시보드",
+            href: "/admin",
+            icon: LayoutDashboard,
+        },
+        {
+            title: "상품 관리",
+            href: "/admin/products",
+            icon: Package,
+        },
+        {
+            title: "예약 관리",
+            href: "/admin/bookings",
+            icon: Calendar,
+            badge: quoteRequestCount.toString(),
+        },
+        {
+            title: "회원 관리",
+            href: "/admin/users",
+            icon: Users,
+        },
+        {
+            title: "고객센터",
+            icon: MessageSquare,
+            children: [
+                { title: "공지사항", href: "/admin/support/notices" },
+                { title: "문의 관리", href: "/admin/support/inquiries", badge: "5" },
+                { title: "FAQ 관리", href: "/admin/support/faq" }
+            ],
+        },
+        {
+            title: "통계 분석",
+            href: "/admin/analytics",
+            icon: BarChart3,
+        },
+    ]
 
   return (
     <aside className="w-64 bg-navy-900 text-white min-h-screen">

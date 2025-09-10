@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Users, Package, Calendar, DollarSign, Eye } from "lucide-react"
 import Link from "next/link"
-import { adminDashboardApi, DashboardSummary, Booking, TopProduct } from "@/lib/admin"
+import {adminDashboardApi, DashboardSummary, Booking, TopProduct, adminBookingApi} from "@/lib/admin"
 import { Skeleton } from "@/components/ui/skeleton"
 
 const quickActions = [
@@ -27,8 +27,8 @@ export default function AdminPage() {
                 const summaryData = await adminDashboardApi.getSummary()
                 setSummary(summaryData)
 
-                const recentBookings = await adminDashboardApi.getRecentBookings()
-                setBookings(recentBookings)
+                const recentBookingsResponse = await adminBookingApi.search({ page: 0, size: 5 })
+                setBookings(recentBookingsResponse.content)
             } catch (err) {
                 console.error("대시보드 데이터 불러오기 실패:", err)
             } finally {
