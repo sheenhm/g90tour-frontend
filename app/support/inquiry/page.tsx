@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -9,9 +8,10 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { MessageSquare, Upload, Phone, Mail } from "lucide-react"
+import { MessageSquare, Phone, Mail } from "lucide-react"
 import { supportApi, type InquiryRequest } from "@/lib/api"
 import { useAuth } from "@/hooks/useAuth"
+import { ToastProvider, Toast, ToastTitle, ToastDescription, ToastClose, ToastViewport } from "@/components/ui/toast"
 
 const inquiryCategories = [
     { value: "예약/결제", label: "예약/결제 문의" },
@@ -83,7 +83,7 @@ export default function InquiryPage() {
         formData.content &&
         formData.nonMemberName &&
         formData.nonMemberEmail &&
-        agreePrivacy
+        (isAuthenticated || agreePrivacy);
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -135,14 +135,38 @@ export default function InquiryPage() {
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-navy-900">문의하기</CardTitle>
-                                <CardDescription>자세한 정보를 입력해주시면 더 정확한 답변을 드릴 수 있습니다</CardDescription>
+                                <CardDescription>
+                                    자세한 정보를 입력해주시면 더 정확한 답변을 드릴 수 있습니다
+                                </CardDescription>
                             </CardHeader>
                             <CardContent>
+                                <ToastProvider>
+                                    <ToastViewport />
+                                    {success && (
+                                        <Toast open duration={3000} onOpenChange={() => setSuccess("")}>
+                                            <ToastTitle>문의 접수 완료</ToastTitle>
+                                            <ToastDescription>빠른 시일 내에 답변드리겠습니다:)</ToastDescription>
+                                            <ToastClose />
+                                        </Toast>
+                                    )}
+                                    {error && (
+                                        <Toast open variant="destructive" duration={3000} onOpenChange={() => setError("")}>
+                                            <ToastTitle>접수 실패</ToastTitle>
+                                            <ToastDescription>{error}</ToastDescription>
+                                            <ToastClose />
+                                        </Toast>
+                                    )}
+                                </ToastProvider>
+
                                 <form onSubmit={handleSubmit} className="space-y-6">
+                                    {/* 문의 유형 */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="category">문의 유형</Label>
-                                            <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
+                                            <Select
+                                                value={formData.category}
+                                                onValueChange={(value) => handleInputChange("category", value)}
+                                            >
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="문의 유형을 선택하세요" />
                                                 </SelectTrigger>
@@ -170,6 +194,7 @@ export default function InquiryPage() {
                                         </div>
                                     </div>
 
+                                    {/* 이메일 / 연락처 */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="email">이메일</Label>
@@ -197,6 +222,7 @@ export default function InquiryPage() {
                                         </div>
                                     </div>
 
+                                    {/* 제목 / 내용 */}
                                     <div className="space-y-2">
                                         <Label htmlFor="subject">제목</Label>
                                         <Input
@@ -221,7 +247,8 @@ export default function InquiryPage() {
                                         />
                                     </div>
 
-                                    <div className="space-y-4">
+                                    {/* 개인정보 동의 */}
+                                    {!isAuthenticated && (
                                         <div className="flex items-center space-x-2">
                                             <Checkbox
                                                 id="agreePrivacy"
@@ -235,9 +262,13 @@ export default function InquiryPage() {
                                                 </a>
                                             </Label>
                                         </div>
-                                    </div>
+                                    )}
 
-                                    <Button type="submit" className="w-full bg-navy-600 hover:bg-navy-700" disabled={!isFormValid || isLoading}>
+                                    <Button
+                                        type="submit"
+                                        className="w-full bg-navy-600 hover:bg-navy-700"
+                                        disabled={!isFormValid || isLoading}
+                                    >
                                         {isLoading ? "접수 중..." : "문의 접수"}
                                     </Button>
                                 </form>
