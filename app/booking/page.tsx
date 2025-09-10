@@ -7,12 +7,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Calendar, Users, MapPin, Clock, CreditCard, Building, Smartphone } from "lucide-react"
 import { productApi, bookingApi } from "@/lib/api"
+import { useAuth } from "@/hooks/useAuth"
 
 // 결제 방법 옵션
 const paymentMethods = [
@@ -22,18 +22,40 @@ const paymentMethods = [
     { id: "naver", name: "네이버페이", icon: Smartphone, description: "네이버페이로 간편결제" },
 ]
 
+// 단위 매핑
+const unitMap: Record<string, string> = {
+    HOTEL: "박",
+    GOLF: "명",
+    TOUR: "명",
+    SPA: "명",
+    ACTIVITY: "명",
+    VEHICLE: "일",
+}
+
+const productTypeMap: Record<string, string> = {
+    HOTEL: "호텔",
+    GOLF: "골프",
+    TOUR: "패키지",
+    SPA: "스파",
+    ACTIVITY: "액티비티",
+    VEHICLE: "차량",
+}
+
 export default function BookingPage() {
     const searchParams = useSearchParams()
     const productId = searchParams.get("productId")
     const defaultDate = searchParams.get("date") || ""
     const defaultCount = searchParams.get("count") || "2"
 
+    const { isAuthenticated, user } = useAuth()
+    const today = new Date().toISOString().split("T")[0];
+
     const [step, setStep] = useState(1)
     const [bookingData, setBookingData] = useState({
         name: "",
         email: "",
         phone: "",
-        travelers: defaultCount,
+        count: Number(defaultCount),
         travelDate: defaultDate,
         specialRequests: "",
         agreeTerms: false,
@@ -57,6 +79,18 @@ export default function BookingPage() {
         description: "",
         includes: [],
     })
+
+    // 로그인 사용자 정보 자동 입력
+    useEffect(() => {
+        if (isAuthenticated && user) {
+            setBookingData((prev) => ({
+                ...prev,
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+            }))
+        }
+    }, [isAuthenticated, user])
 
     // 상품 정보 가져오기
     useEffect(() => {
@@ -85,7 +119,7 @@ export default function BookingPage() {
             const response = await bookingApi.request({
                 productId: productId!,
                 travelDate: bookingData.travelDate,
-                travelers: Number.parseInt(bookingData.travelers),
+                counts: bookingData.count,
                 specialRequests: bookingData.specialRequests,
             })
             setBookingData((prev) => ({
@@ -93,24 +127,24 @@ export default function BookingPage() {
                 finalPrice: response.totalPrice,
                 bookingId: response.id,
             }))
-            setStep(3)
+            setStep(2)
         } catch (err: any) {
             console.error("견적 요청 실패:", err)
             alert("견적 요청 중 오류가 발생했습니다.")
         }
     }
 
-    // 결제 처리 (실제 API 연결 필요 시 확장 가능)
+    // 결제 처리 (추후 구현 예정)
     const handleFinalBooking = (e: React.FormEvent) => {
         e.preventDefault()
-        alert(`예약이 완료되었습니다! 결제 방법: ${bookingData.paymentMethod}`)
+        alert("결제 모듈 연결 예정입니다.")
     }
 
     const isQuoteFormValid =
         bookingData.name &&
         bookingData.email &&
         bookingData.phone &&
-        bookingData.travelers &&
+        bookingData.count &&
         bookingData.travelDate &&
         bookingData.agreeTerms
 
@@ -122,7 +156,7 @@ export default function BookingPage() {
                 {/* Progress Steps */}
                 <div className="mb-8">
                     <div className="flex items-center justify-center space-x-4">
-                        {["견적 요청", "관리자 검토", "최종 확인 & 결제"].map((label, idx) => (
+                        {["견적 요청", "매니저 검토", "최종 확인 & 결제"].map((label, idx) => (
                             <React.Fragment key={idx}>
                                 <div className={`flex items-center ${step >= idx + 1 ? "text-navy-600" : "text-gray-400"}`}>
                                     <div
@@ -150,7 +184,7 @@ export default function BookingPage() {
                             <CardContent className="space-y-4">
                                 <img src={productInfo.image} alt={productInfo.name} className="w-full h-48 object-cover rounded-lg" />
                                 <div>
-                                    <Badge className="mb-2 bg-teal-600">{productInfo.type}</Badge>
+                                    <Badge className="mb-2 bg-teal-600">{productTypeMap[productInfo.type]}</Badge>
                                     <h3 className="text-lg font-semibold text-navy-900">{productInfo.name}</h3>
                                     <p className="text-gray-600 text-sm mt-1">{productInfo.description}</p>
                                 </div>
@@ -163,7 +197,7 @@ export default function BookingPage() {
                                     ))}
                                 </div>
                                 <Separator />
-                                {step >= 1 && bookingData.travelers && (
+                                {step >= 1 && bookingData.count && (
                                     <div className="bg-navy-50 border border-navy-200 p-4 rounded-lg">
                                         <div className="space-y-2">
                                             <div className="flex justify-between text-sm">
@@ -171,15 +205,19 @@ export default function BookingPage() {
                                                 <span>{productInfo.price.toLocaleString()}원</span>
                                             </div>
                                             <div className="flex justify-between text-sm">
-                                                <span>인원 ({bookingData.travelers}명)</span>
-                                                <span>× {bookingData.travelers}</span>
+                                                <span>
+                                                    {productInfo.type === "HOTEL" ? "투숙박수"
+                                                        : productInfo.type === "VEHICLE" ? "렌트일수"
+                                                            : "인원"} ({bookingData.count}{unitMap[productInfo.type]})
+                                                </span>
+                                                <span>× {bookingData.count}</span>
                                             </div>
                                             <Separator />
                                             <div className="flex justify-between font-bold text-xl text-navy-900">
                                                 <span>최종 결제 금액</span>
                                                 <span className="text-teal-600">
-                          {(productInfo.price * Number.parseInt(bookingData.travelers)).toLocaleString()}원
-                        </span>
+                                                    {(productInfo.price * bookingData.count).toLocaleString()}원
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -208,6 +246,7 @@ export default function BookingPage() {
                                                     value={bookingData.name}
                                                     onChange={(e) => handleInputChange("name", e.target.value)}
                                                     required
+                                                    disabled={isAuthenticated}
                                                 />
                                             </div>
                                             <div className="space-y-2">
@@ -219,6 +258,7 @@ export default function BookingPage() {
                                                     value={bookingData.phone}
                                                     onChange={(e) => handleInputChange("phone", e.target.value)}
                                                     required
+                                                    disabled={isAuthenticated}
                                                 />
                                             </div>
                                         </div>
@@ -235,19 +275,33 @@ export default function BookingPage() {
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="space-y-2">
-                                                <Label htmlFor="travelers">여행 인원 *</Label>
-                                                <Select value={bookingData.travelers} onValueChange={(value) => handleInputChange("travelers", value)}>
-                                                    <SelectTrigger>
-                                                        <SelectValue />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {["1", "2", "3", "4", "5", "6+"].map((num) => (
-                                                            <SelectItem key={num} value={num}>
-                                                                {num}명
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
+                                                <Label htmlFor="count">
+                                                    {unitMap[productInfo.type]} *
+                                                </Label>
+                                                <div className="flex items-center gap-2">
+                                                    <Button
+                                                        type="button"
+                                                        className="px-3 py-1 border rounded hover:bg-gray-100"
+                                                        onClick={() => handleInputChange("count", Math.max(1, bookingData.count - 1))}
+                                                    >
+                                                        -
+                                                    </Button>
+                                                    <Input
+                                                        type="number"
+                                                        min={1}
+                                                        value={bookingData.count}
+                                                        onChange={(e) => handleInputChange("count", Number(e.target.value))}
+                                                        className="w-16 text-center"
+                                                    />
+                                                    <Button
+                                                        type="button"
+                                                        className="px-3 py-1 border rounded hover:bg-gray-100"
+                                                        onClick={() => handleInputChange("count", bookingData.count + 1)}
+                                                    >
+                                                        +
+                                                    </Button>
+                                                    <span>{unitMap[productInfo.type]}</span>
+                                                </div>
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="travelDate">희망 여행일 *</Label>
@@ -255,6 +309,7 @@ export default function BookingPage() {
                                                     id="travelDate"
                                                     type="date"
                                                     value={bookingData.travelDate}
+                                                    min={today}
                                                     onChange={(e) => handleInputChange("travelDate", e.target.value)}
                                                     required
                                                 />
@@ -288,93 +343,22 @@ export default function BookingPage() {
                             </Card>
                         )}
 
-                        {step === 3 && (
+                        {step === 2 && (
                             <Card>
                                 <CardHeader>
-                                    <CardTitle className="text-navy-900">최종 확인 및 결제</CardTitle>
-                                    <CardDescription>견적이 승인되었습니다. 최종 정보를 확인하고 결제를 진행해주세요.</CardDescription>
+                                    <CardTitle className="text-navy-900">견적 요청 완료</CardTitle>
+                                    <CardDescription>담당 매니저가 확인 후 24시간 이내 연락드리겠습니다.</CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="space-y-6">
-                                        {/* 승인된 견적 정보 */}
-                                        <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
-                                                    <span className="text-white text-sm">✓</span>
-                                                </div>
-                                                <h4 className="font-semibold text-green-900">견적 승인 완료</h4>
-                                            </div>
-                                            <p className="text-green-800 text-sm">관리자 검토가 완료되어 최종 견적이 확정되었습니다.</p>
-                                        </div>
-
-                                        {/* 최종 예약 정보 */}
-                                        <div className="bg-gray-50 p-4 rounded-lg">
-                                            <h4 className="font-semibold text-navy-900 mb-3">예약 정보</h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                                <div className="flex items-center gap-2">
-                                                    <Users className="w-4 h-4 text-teal-600" />
-                                                    <span>
-                            {bookingData.name} 외 {Number.parseInt(bookingData.travelers) - 1}명
-                          </span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <Calendar className="w-4 h-4 text-teal-600" />
-                                                    <span>{bookingData.travelDate}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <MapPin className="w-4 h-4 text-teal-600" />
-                                                    <span>{productInfo.name}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <Clock className="w-4 h-4 text-teal-600" />
-                                                    <span>총 {bookingData.finalPrice.toLocaleString()}원</span>
-                                                </div>
+                                    <div className="bg-blue-50 border border-blue-200 p-6 rounded-xl text-center">
+                                        <div className="flex justify-center mb-4">
+                                            <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                                                <span className="text-white text-2xl">⌛</span>
                                             </div>
                                         </div>
-
-                                        {/* 결제 방법 선택 */}
-                                        <form onSubmit={handleFinalBooking} className="space-y-6">
-                                            <div className="space-y-3">
-                                                <Label>결제 방법 선택 *</Label>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                    {paymentMethods.map((method) => (
-                                                        <div
-                                                            key={method.id}
-                                                            className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                                                                bookingData.paymentMethod === method.id
-                                                                    ? "border-navy-600 bg-navy-50"
-                                                                    : "border-gray-200 hover:border-gray-300"
-                                                            }`}
-                                                            onClick={() => handleInputChange("paymentMethod", method.id)}
-                                                        >
-                                                            <div className="flex items-center gap-3">
-                                                                <input
-                                                                    type="radio"
-                                                                    name="paymentMethod"
-                                                                    value={method.id}
-                                                                    checked={bookingData.paymentMethod === method.id}
-                                                                    onChange={() => handleInputChange("paymentMethod", method.id)}
-                                                                    className="text-navy-600"
-                                                                />
-                                                                <method.icon className="w-5 h-5 text-gray-600" />
-                                                                <div>
-                                                                    <p className="font-medium text-navy-900">{method.name}</p>
-                                                                    <p className="text-xs text-gray-600">{method.description}</p>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            <Button
-                                                type="submit"
-                                                className="w-full bg-teal-600 hover:bg-teal-700 text-lg py-3"
-                                                disabled={!isFinalFormValid}
-                                            >
-                                                {bookingData.finalPrice.toLocaleString()}원 결제하기
-                                            </Button>
-                                        </form>
+                                        <h3 className="text-lg font-semibold text-navy-900">견적 요청이 접수되었습니다</h3>
+                                        <p className="text-gray-600 mt-2">담당 매니저가 내용을 검토한 후 연락드릴 예정입니다.</p>
+                                        <p className="text-gray-600 mt-1">카카오 알림톡으로도 예약 내역이 발송되었습니다.</p>
                                     </div>
                                 </CardContent>
                             </Card>
