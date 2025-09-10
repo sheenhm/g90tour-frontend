@@ -1,4 +1,4 @@
-import { apiClient, User, PagedResponse, SearchParams, UrlResponse } from "@/lib/api"
+import {apiClient, User, PagedResponse, ProductSearchParams, UrlResponse } from "@/lib/api"
 import { Product } from "./product"
 
 const toQueryString = (params: Record<string, any>) =>
@@ -11,7 +11,8 @@ const toQueryString = (params: Record<string, any>) =>
 // --- DTO 정의 ---
 export interface TopProduct { productId: string; productName: string; bookingCount: number; }
 export interface DashboardSummary { totalUsers: number; newUsersLast7Days: number; totalBookings: number; newBookingsLast7Days: number; totalRevenue: number; revenueLast7Days: number; activeProducts: number; top5Products: TopProduct[]; }
-export interface Booking { id: string; userId: string; customerName: string; productId: string; productName: string; travelDate: string; travelers: number; originalPrice: number; discountedAmount: number; totalPrice: number; status: "QUOTE_REQUESTED" | "PAYMENT_PENDING" | "PAYMENT_COMPLETED" | "TRAVEL_COMPLETED" | "CANCEL_PENDING" | "CANCELLED"; specialRequests?: string; createdAt: string; }
+export interface Booking { id: string; userId: string; customerName: string; productId: string; productName: string; travelDate: string; travelers: number; originalPrice: number; discountedAmount: number; totalPrice: number; status: "QUOTE_REQUESTED" | "PAYMENT_PENDING" | "PAYMENT_COMPLETED" | "TRAVEL_COMPLETED" | "CANCEL_PENDING" | "CANCELLED"; specialRequests?: string; createdAt: string; memoForAdmin: string;}
+export interface BookingSearchParams { status: string, page?: number; size?: number; sort?: string; }
 export interface AdminUsersPageResponse extends PagedResponse<User> {}
 export type CouponType = "AMOUNT" | "RATE";
 export interface Coupon { id: number; code: string; description: string; discountType: CouponType; discountAmount?: number; discountRate?: number; maxDiscountAmount?: number; status: string; expiryDate: string; }
@@ -29,18 +30,23 @@ export interface NoticeCreateRequest { title: string; content: string; category:
 
 export const adminDashboardApi = {
     getSummary: () => apiClient.get<DashboardSummary>("/api/v1/admin/dashboard/summary"),
+    getRecentBookings: (page = 0, size = 5) =>
+        apiClient.get<{ content: Booking[] }>(`/api/v1/admin/bookings?${toQueryString({ page, size })}`)
+            .then(res => res.content || []),
 };
 
 export const adminBookingApi = {
-    getRecent: (page = 0, size = 5) =>
-        apiClient.get<{ content: Booking[] }>(`/api/v1/admin/bookings?${toQueryString({ page, size })}`)
-            .then(res => res.content || []),
+    search: (params: BookingSearchParams) =>
+        apiClient.get<PagedResponse<Booking>>(`/api/v1/admin/bookings/search?${toQueryString(params)}`),
     approve: (bookingId: string) => apiClient.post(`/api/v1/admin/bookings/${bookingId}/approve`),
     confirmCancellation: (bookingId: string) => apiClient.post(`/api/v1/admin/bookings/${bookingId}/confirm-cancellation`),
+};
+
+export const adminQuotationApi = {
     downloadQuotationPdf: (bookingId: string): Promise<Blob> =>
         apiClient.get(`/api/v1/admin/bookings/${bookingId}/quotation/download`, {}, true),
     sendQuotationEmail: (bookingId: string) => apiClient.post(`/api/v1/admin/bookings/${bookingId}/quotation/send-email`),
-};
+}
 
 export const adminUserApi = {
     getAll: (page = 0, size = 10) =>
@@ -51,11 +57,11 @@ export const adminUserApi = {
 export const adminProductApi = {
     getAll: () => apiClient.get<Product[]>("/api/v1/admin/products"),
     getById: (id: string) => apiClient.get<Product>(`/api/v1/admin/products/${id}`),
-    search: (params: SearchParams) =>
+    search: (params: ProductSearchParams) =>
         apiClient.get<PagedResponse<Product>>(`/api/v1/admin/products/search?${toQueryString(params)}`),
     create: (product: FormData) => apiClient.post<Product>("/api/v1/admin/products", product),
     update: (id: string, product: FormData) => apiClient.put<Product>(`/api/v1/admin/products/${id}`, product),
-    toggleActive: (id: string) => apiClient.delete(`/api/v1/admin/products/${id}`),
+    toggleActive: (id: string) => apiClient.patch(`/api/v1/admin/products/${id}`),
 };
 
 export const adminFileApi = {

@@ -1,4 +1,4 @@
-import { apiClient, PagedResponse, SearchParams, Review, ReviewRequest } from "@/lib/api";
+import { apiClient, PagedResponse, ProductSearchParams, Review, ReviewRequest } from "@/lib/api";
 
 export type Category = "HOTEL" | "GOLF" | "TOUR" | "SPA" | "VEHICLE" | "ACTIVITY";
 export type Currency = "KRW" | "USD" | "VND" | "JPY" | "EUR" | "THB" | "CNY";
@@ -120,7 +120,11 @@ export const productApi = {
         return apiClient.get<Product>(`/api/v1/products/${id}`);
     },
 
-    search: async (params: SearchParams): Promise<PagedResponse<Product>> => {
+    getByCategory: async (category: string): Promise<Product> => {
+        return apiClient.get<Product>(`/api/v1/products/category/${category}`)
+    },
+
+    search: async (params: ProductSearchParams): Promise<PagedResponse<Product>> => {
         const searchParams = new URLSearchParams();
         Object.entries(params).forEach(([key, value]) => {
             if (value !== undefined && value !== null) {

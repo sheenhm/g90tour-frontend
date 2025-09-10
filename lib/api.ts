@@ -117,11 +117,12 @@ export interface SignupResponse { message: string }
 export interface MyPageInfo { userId: string; name: string; email: string; phone: string; birth: string; gender: "MALE" | "FEMALE"; grade: string; totalSpent: number; totalBookings: number; bookingHistory: BookingResponse[]; }
 export interface Coupon { description: string; discountType: "FIXED_AMOUNT" | "PERCENTAGE"; discountAmount: number; discountRate: number; maxDiscountAmount: number; status: "ACTIVE" | "EXPIRED" | "USED" | "REVOKED"; expiryDate: string; }
 export interface MyCoupon { userCouponId: number; coupon: Coupon }
-export interface BookingRequest { productId: string; travelDate: string; travelers: number; specialRequests?: string; appliedUserCouponId?: number; }
+export interface BookingRequest { productId: string; travelDate: string; counts: number; specialRequests?: string; appliedUserCouponId?: number; }
 export interface BookingResponse { id: string; userId: string; customerName: string; productId: string; productName: string; travelDate: string; counts: number; originalPrice: number; discountedAmount: number; totalPrice: number; status: "QUOTE_REQUESTED" | "PAYMENT_PENDING" | "PAYMENT_COMPLETED" | "TRAVEL_COMPLETED" | "CANCEL_PENDING" | "CANCELLED"; specialRequests?: string; createdAt: string; }
+export interface PaymentPageResponse { bookingId: string; name: string; travelDate: string; productName: string; productType: string; originalPrice: number; discountedAmount: number; finalPrice: number; status: "PAYMENT_PENDING" | "PAYMENT_COMPLETED"; }
 export interface Review { id: number; authorName: string; rating: 1 | 2 | 3 | 4 | 5; content: string; createdAt: string; }
 export interface ReviewRequest { rating: number; content: string; }
-export interface SearchParams { keyword?: string; category?: string; minPrice?: number; maxPrice?: number; page?: number; size?: number; sort?: string; }
+export interface ProductSearchParams { keyword?: string; category?: string; minPrice?: number; maxPrice?: number; page?: number; size?: number; sort?: string; }
 export interface PagedResponse<T> { content: T[]; pageNumber: number; pageSize: number; totalPages: number; totalElements: number; isFirst: boolean; isLast: boolean; }
 export interface Notice { id: number; title: string; content: string; category: string; views: number; createdAt: string; active: boolean; pinned: boolean; }
 export interface Faq { id: number; question: string; answer: string; category: string; }
@@ -149,10 +150,14 @@ export const authApi = {
 export const bookingApi = {
     request: (data: BookingRequest) => apiClient.post<BookingResponse>("/api/v1/bookings/request", data),
     cancel: (bookingId: string) => apiClient.patch<void>(`/api/v1/bookings/${bookingId}/cancel`),
+    getPaymentPage: (bookingId: string) => apiClient.get<PaymentPageResponse>(`/api/v1/bookings/${bookingId}/pay`),
+    paymentComplete: (bookingId: string) => apiClient.post<BookingResponse>(`/api/v1/bookings/${bookingId}/pay/complete`),
 };
 
 // --- MyPage API ---
-export const mypageApi = { getInfo: (): Promise<MyPageInfo> => apiClient.get<MyPageInfo>("/api/v1/mypage") };
+export const mypageApi = {
+    getInfo: (): Promise<MyPageInfo> => apiClient.get<MyPageInfo>("/api/v1/mypage")
+};
 
 // --- Coupon API ---
 export const couponApi = {
