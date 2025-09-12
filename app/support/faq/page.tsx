@@ -3,11 +3,11 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Search, HelpCircle } from "lucide-react"
+import { Search, HelpCircle, MessageSquare } from "lucide-react"
 import { supportApi, type Faq } from "@/lib/api"
+import Image from "next/image"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const faqCategories = [
     { id: "all", name: "전체" },
@@ -48,87 +48,77 @@ export default function FAQPage() {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Hero Section */}
-            <section className="bg-gradient-to-r from-navy-900 to-teal-800 text-white py-16">
-                <div className="container mx-auto px-4 text-center">
+            <section className="relative h-[400px] w-full flex items-center justify-center">
+                <Image
+                    src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?q=80&w=1935&auto=format&fit=crop"
+                    alt="FAQ"
+                    fill
+                    className="object-cover"
+                />
+                <div className="absolute inset-0 bg-black/50" />
+                <div className="relative z-10 container mx-auto px-4 text-center text-white">
                     <HelpCircle className="w-16 h-16 mx-auto mb-4" />
-                    <h1 className="text-4xl font-bold mb-4">자주묻는질문</h1>
-                    <p className="text-xl text-gray-200">궁금한 점을 빠르게 해결하세요</p>
+                    <h1 className="text-4xl md:text-5xl font-bold mb-4">자주 묻는 질문</h1>
+                    <p className="text-lg md:text-xl text-gray-200">궁금한 점을 빠르게 해결하세요.</p>
                 </div>
             </section>
 
-            <div className="container mx-auto px-4 py-16">
+            <div className="container mx-auto px-4 py-16 max-w-4xl">
                 {/* Search */}
-                <Card className="mb-8">
+                <div className="relative mb-8">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Input
+                        placeholder="궁금한 내용을 검색해보세요..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-12 h-12 text-lg rounded-full shadow-md"
+                    />
+                </div>
+
+                <Card>
                     <CardContent className="p-6">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                            <Input
-                                placeholder="궁금한 내용을 검색해보세요..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10"
-                            />
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                    {/* Categories */}
-                    <div className="lg:col-span-1">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-navy-900">카테고리</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-2">
+                        <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
+                            <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 mb-6">
                                 {faqCategories.map((category) => (
-                                    <Button
-                                        key={category.id}
-                                        variant={selectedCategory === category.id ? "default" : "ghost"}
-                                        className={`w-full justify-between ${
-                                            selectedCategory === category.id ? "bg-navy-600 hover:bg-navy-700" : "hover:bg-gray-100"
-                                        }`}
-                                        onClick={() => setSelectedCategory(category.id)}
-                                    >
-                                        <span>{category.name}</span>
-                                    </Button>
+                                    <TabsTrigger key={category.id} value={category.id}>
+                                        {category.name}
+                                    </TabsTrigger>
                                 ))}
-                            </CardContent>
-                        </Card>
-                    </div>
+                            </TabsList>
 
-                    {/* FAQ Content */}
-                    <div className="lg:col-span-3 space-y-8">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-navy-900">
-                                    {faqCategories.find((c) => c.id === selectedCategory)?.name}
-                                </CardTitle>
-                                <CardDescription>{filteredFAQs.length}개의 질문이 있습니다</CardDescription>
-                            </CardHeader>
-                            <CardContent>
+                            <TabsContent value={selectedCategory}>
                                 {isLoading ? (
-                                    <div className="text-center py-12">
+                                    <div className="text-center py-20">
                                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-600 mx-auto mb-4"></div>
                                         <p>FAQ를 불러오는 중입니다...</p>
                                     </div>
                                 ) : filteredFAQs.length > 0 ? (
-                                    <Accordion type="single" collapsible className="w-full">
-                                        {filteredFAQs.map((faq) => (
-                                            <AccordionItem key={faq.id} value={faq.id.toString()}>
-                                                <AccordionTrigger className="text-left">{faq.question}</AccordionTrigger>
-                                                <AccordionContent className="text-gray-600">{faq.answer}</AccordionContent>
+                                    <Accordion type="single" collapsible className="w-full space-y-2">
+                                        {filteredFAQs.map((faq, index) => (
+                                            <AccordionItem key={faq.id} value={`item-${index}`} className="border rounded-lg bg-white">
+                                                <AccordionTrigger className="text-left font-semibold text-navy-900 px-6 py-4 hover:no-underline">
+                                                    <span className="text-teal-600 mr-3">Q.</span>{faq.question}
+                                                </AccordionTrigger>
+                                                <AccordionContent className="px-6 pb-4 text-gray-700 leading-relaxed border-t pt-4">
+                                                    <div className="flex items-start gap-3">
+                                                        <span className="text-navy-600 font-bold">A.</span>
+                                                        <p>{faq.answer}</p>
+                                                    </div>
+                                                </AccordionContent>
                                             </AccordionItem>
                                         ))}
                                     </Accordion>
                                 ) : (
-                                    <div className="text-center py-8">
+                                    <div className="text-center py-20">
+                                        <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4"/>
                                         <p className="text-gray-500">검색 결과가 없습니다.</p>
+                                        <p className="text-sm text-gray-400 mt-2">다른 검색어나 카테고리를 선택해보세요.</p>
                                     </div>
                                 )}
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
+                            </TabsContent>
+                        </Tabs>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     )
