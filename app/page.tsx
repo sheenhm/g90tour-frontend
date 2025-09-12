@@ -93,16 +93,16 @@ export default function HomePage() {
     return (
         <div className="min-h-screen bg-slate-50 text-gray-800">
             {/* Hero Section */}
-            <section className="relative h-[600px] lg:h-screen w-full overflow-hidden flex items-center justify-center">
+            <section className="relative h-[600px] md:aspect-[1920/854] w-full overflow-hidden flex items-center justify-center">
                 <video
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute top-0 left-0 w-full h-full object-cover"
                     src="/lending.mp4"
                     autoPlay
                     muted
                     loop
                     playsInline
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-black/10"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-black/10" />
 
                 <div className="relative z-10 container mx-auto px-4 text-center text-white">
                     <motion.h1
