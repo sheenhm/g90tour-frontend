@@ -2,17 +2,38 @@
 
 import { useState, useEffect } from "react"
 import { useAuth } from "@/hooks/useAuth"
-import axios from "axios"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from "@/components/ui/dialog"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
-import { Menu, User as UserIcon, Search, Phone, LogOut, UserCircle, Building2 } from "lucide-react"
-import { authApi } from "@/lib/api"
+import {
+    Menu,
+    User as UserIcon,
+    Search,
+    Phone,
+    LogOut,
+    UserCircle,
+    Building2,
+} from "lucide-react"
 import type { User } from "@/lib/api"
+import { usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
 
 const navigation = [
     { name: "호텔", href: "/hotels" },
@@ -24,8 +45,13 @@ const navigation = [
     { name: "고객센터", href: "/support" },
 ]
 
-// 검색 모달 컴포넌트
-function SearchModal({ isOpen, onOpenChange }: { isOpen: boolean; onOpenChange: (open: boolean) => void }) {
+function SearchModal({
+                         isOpen,
+                         onOpenChange,
+                     }: {
+    isOpen: boolean
+    onOpenChange: (open: boolean) => void
+}) {
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
@@ -51,7 +77,6 @@ function SearchModal({ isOpen, onOpenChange }: { isOpen: boolean; onOpenChange: 
     )
 }
 
-// AuthLinks (모바일 및 비로그인 Top Bar 처리)
 function AuthLinks({
                        user,
                        logout,
@@ -64,54 +89,63 @@ function AuthLinks({
     closeMenu?: () => void
 }) {
     if (isMobile) {
-        if (user) {
-            return (
-                <>
-                    <Link
-                        href="/mypage"
-                        className="block text-lg py-2 hover:text-primary flex items-center gap-2"
-                        onClick={closeMenu}
-                    >
-                        <UserCircle className="w-5 h-5" /> 마이페이지
-                    </Link>
-                    {user.role === "ADMIN" && (
+        return (
+            <div className="border-t pt-4 mt-4 space-y-2">
+                {user ? (
+                    <>
                         <Link
-                            href="/admin"
-                            className="block text-lg py-2 font-semibold text-primary hover:text-primary/90 flex items-center gap-2"
+                            href="/mypage"
+                            className="block text-lg py-2 hover:text-primary flex items-center gap-2"
                             onClick={closeMenu}
                         >
-                            <Building2 className="w-5 h-5" /> 관리자 페이지
+                            <UserCircle className="w-5 h-5" /> 마이페이지
                         </Link>
-                    )}
-                    <button
-                        onClick={() => {
-                            logout()
-                            closeMenu?.()
-                        }}
-                        className="block text-lg py-2 text-left w-full hover:text-primary flex items-center gap-2"
-                    >
-                        <LogOut className="w-5 h-5" /> 로그아웃
-                    </button>
-                </>
-            )
-        }
-        return (
-            <>
-                <Link href="/login" className="block text-lg py-2" onClick={closeMenu}>
-                    로그인
-                </Link>
-                <Link href="/signup" className="block text-lg py-2" onClick={closeMenu}>
-                    회원가입
-                </Link>
-            </>
+                        {user.role === "ADMIN" && (
+                            <Link
+                                href="/admin"
+                                className="block text-lg py-2 font-semibold text-primary hover:text-primary/90 flex items-center gap-2"
+                                onClick={closeMenu}
+                            >
+                                <Building2 className="w-5 h-5" /> 관리자 페이지
+                            </Link>
+                        )}
+                        <button
+                            onClick={() => {
+                                logout()
+                                closeMenu?.()
+                            }}
+                            className="block text-lg py-2 text-left w-full hover:text-primary flex items-center gap-2"
+                        >
+                            <LogOut className="w-5 h-5" /> 로그아웃
+                        </button>
+                    </>
+                ) : (
+                    <>
+                        <Link href="/login" className="block text-lg py-2" onClick={closeMenu}>
+                            로그인
+                        </Link>
+                        <Link href="/signup" className="block text-lg py-2" onClick={closeMenu}>
+                            회원가입
+                        </Link>
+                    </>
+                )}
+                <div className="flex items-center gap-2 text-gray-600 pt-4 border-t">
+                    <Phone className="w-4 h-4" />
+                    <span>02-2662-2110</span>
+                </div>
+            </div>
         )
     }
 
     if (!user) {
         return (
-            <div className="flex items-center gap-4">
-                <Link href="/login" className="text-gray-600 hover:text-primary">로그인</Link>
-                <Link href="/signup" className="text-gray-600 hover:text-primary">회원가입</Link>
+            <div className="flex items-center gap-2">
+                <Button asChild variant="ghost" className="text-inherit">
+                    <Link href="/login">로그인</Link>
+                </Button>
+                <Button asChild className="bg-teal-600 hover:bg-teal-700">
+                    <Link href="/signup">회원가입</Link>
+                </Button>
             </div>
         )
     }
@@ -119,105 +153,132 @@ function AuthLinks({
     return null
 }
 
-// Header 컴포넌트
 export default function Header() {
-    const { user, isAuthenticated, isLoading, logout } = useAuth()
+    const { user, isLoading, logout } = useAuth()
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isSearchOpen, setIsSearchOpen] = useState(false)
+    const pathname = usePathname()
+
+    const headerClasses = cn(
+        "sticky top-0 z-50 transition-all duration-300", "bg-white/95 shadow-md backdrop-blur-sm"
+    )
+
+    const linkClasses = cn(
+        "font-medium transition-colors", "text-gray-700 hover:text-primary"
+    )
+
+    const iconButtonClasses = cn(
+        "text-gray-700 hover:text-primary"
+    )
 
     return (
         <>
-            <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/80 sticky top-0 z-40">
+            <header className={headerClasses}>
                 <div className="container mx-auto px-4">
-                    {/* Top Bar */}
-                    <div className="flex items-center justify-between py-2 text-sm border-b">
-                        <div className="flex items-center gap-4 text-gray-600">
-                            <div className="flex items-center gap-1">
-                                <Phone className="w-4 h-4" />
-                                <span>02-2662-2110</span>
-                            </div>
-                            <span className="hidden sm:block">평일 09:00-18:00 (한국시간 기준)</span>
-                        </div>
-                        {!isLoading && (
-                            <div className="hidden md:flex">
-                                <AuthLinks user={user} logout={logout} />
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Main Header */}
-                    <div className="flex items-center justify-between py-4">
-                        {/* Logo */}
-                        <Link href="/" className="flex items-center gap-2">
+                    <div className="flex items-center justify-between h-20">
+                        <Link href="/" className="flex items-center gap-3">
                             <Image
                                 src="/logo.png"
-                                alt="G90 Entertainment Tour"
-                                width={120}
-                                height={60}
+                                alt="G90 TOUR"
+                                height={48}
                                 className="h-12 w-auto"
                                 priority
                             />
-                            <span className="text-xl font-bold text-gray-900 hidden sm:inline">지구공투어</span>
+                            <span
+                                className={cn(
+                                    "text-xl font-bold hidden sm:inline transition-colors", "text-gray-900"
+                                )}
+                            >
+                                지구공투어
+                            </span>
                         </Link>
 
-                        {/* Desktop Navigation */}
                         <nav className="hidden lg:flex items-center space-x-8">
                             {navigation.map((item) => (
                                 <Link
                                     key={item.name}
                                     href={item.href}
-                                    className="text-gray-700 hover:text-primary font-medium transition-colors"
+                                    className={cn(
+                                        linkClasses,
+                                        "relative group",
+                                        pathname === item.href && "font-semibold",
+                                    )}
                                 >
                                     {item.name}
+                                    <span className={cn(
+                                        "absolute bottom-0 left-0 h-0.5 bg-teal-500 w-full scale-x-0 group-hover:scale-x-100 transition-transform duration-300",
+                                        pathname === item.href && "scale-x-100",
+                                    )} />
                                 </Link>
                             ))}
                         </nav>
 
-                        {/* Action Buttons */}
                         <div className="flex items-center gap-2 sm:gap-4">
-                            <Button variant="ghost" size="icon" className="hidden md:flex" aria-label="검색" onClick={() => setIsSearchOpen(true)}>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className={cn("hidden md:flex", iconButtonClasses)}
+                                aria-label="검색"
+                                onClick={() => setIsSearchOpen(true)}
+                            >
                                 <Search className="w-5 h-5" />
                             </Button>
 
-                            {/* 데스크탑 유저 메뉴 */}
                             {!isLoading && (
                                 <div className="hidden md:flex">
                                     {user ? (
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" aria-label="사용자 메뉴">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className={iconButtonClasses}
+                                                    aria-label="사용자 메뉴"
+                                                >
                                                     <UserIcon className="w-5 h-5" />
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end" className="w-48">
-                                                <DropdownMenuLabel>안녕하세요, {user.name}님!</DropdownMenuLabel>
+                                                <DropdownMenuLabel>
+                                                    안녕하세요, {user.name}님!
+                                                </DropdownMenuLabel>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem asChild>
-                                                    <Link href="/mypage" className="cursor-pointer">마이페이지</Link>
+                                                    <Link href="/mypage">마이페이지</Link>
                                                 </DropdownMenuItem>
                                                 {user.role === "ADMIN" && (
                                                     <DropdownMenuItem asChild>
-                                                        <Link href="/admin" className="cursor-pointer font-semibold text-primary">관리자 페이지</Link>
+                                                        <Link
+                                                            href="/admin"
+                                                            className="font-semibold text-primary"
+                                                        >
+                                                            관리자 페이지
+                                                        </Link>
                                                     </DropdownMenuItem>
                                                 )}
                                                 <DropdownMenuSeparator />
-                                                <DropdownMenuItem onClick={logout} className="cursor-pointer">로그아웃</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={logout}>
+                                                    로그아웃
+                                                </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     ) : (
-                                        <Button variant="ghost" size="icon" asChild>
-                                            <Link href="/login" aria-label="로그인">
-                                                <UserIcon className="w-5 h-5" />
-                                            </Link>
-                                        </Button>
+                                        <AuthLinks user={null} logout={() => {}} />
                                     )}
                                 </div>
                             )}
 
-                            {/* Mobile Menu */}
-                            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                            <Sheet
+                                open={isMobileMenuOpen}
+                                onOpenChange={setIsMobileMenuOpen}
+                            >
                                 <SheetTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="lg:hidden" aria-label="메뉴 열기">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className={cn("lg:hidden", iconButtonClasses)}
+                                        aria-label="메뉴 열기"
+                                    >
                                         <Menu className="w-6 h-6" />
                                     </Button>
                                 </SheetTrigger>
@@ -233,14 +294,12 @@ export default function Header() {
                                                 {item.name}
                                             </Link>
                                         ))}
-                                        <div className="border-t pt-4 mt-4">
-                                            <AuthLinks
-                                                user={user}
-                                                logout={logout}
-                                                isMobile
-                                                closeMenu={() => setIsMobileMenuOpen(false)}
-                                            />
-                                        </div>
+                                        <AuthLinks
+                                            user={user}
+                                            logout={logout}
+                                            isMobile
+                                            closeMenu={() => setIsMobileMenuOpen(false)}
+                                        />
                                     </div>
                                 </SheetContent>
                             </Sheet>
@@ -249,7 +308,6 @@ export default function Header() {
                 </div>
             </header>
 
-            {/* 검색 모달 */}
             <SearchModal isOpen={isSearchOpen} onOpenChange={setIsSearchOpen} />
         </>
     )
