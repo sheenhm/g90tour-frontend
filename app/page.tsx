@@ -111,7 +111,7 @@ export default function HomePage() {
                         transition={{ duration: 0.8, ease: "easeOut" }}
                         className="text-4xl md:text-5xl lg:text-7xl font-extrabold mb-4 tracking-tight"
                     >
-                        당신만의 특별한 여정
+                        나만의 특별한 여행
                     </motion.h1>
                     <motion.p
                         initial={{ opacity: 0, y: -20 }}
