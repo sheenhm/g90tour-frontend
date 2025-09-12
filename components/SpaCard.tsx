@@ -1,96 +1,74 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, Star, Users, Calendar } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { MapPin, Star, Clock, Sparkles } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Product } from "@/lib/product"
+import { type Product } from "@/lib/product"
 
 export default function SpaCard({ product }: { product: Product }) {
+    const hasDiscount = product.originalPrice > product.salePrice;
+
     return (
-        <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+        <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 group">
             <div className="relative">
                 <Image
                     src={product.imageUrl || "/placeholder.svg"}
                     alt={product.name}
                     width={400}
                     height={250}
-                    className="w-full h-64 object-cover"
+                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                <Badge className="absolute top-3 left-3 bg-teal-600 hover:bg-teal-700">{product.spaDetails?.treatmentType}</Badge>
-                <Badge className="absolute top-3 right-3 bg-navy-600 hover:bg-navy-700">{product.spaDetails?.durationMinutes}</Badge>
+                <div className="absolute top-3 left-3 flex gap-2">
+                    <Badge className="bg-teal-600/80 backdrop-blur-sm text-white border-teal-500">
+                        {product.spaDetails?.treatmentType}
+                    </Badge>
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent">
+                    <h3 className="text-lg font-bold text-white truncate">{product.name}</h3>
+                </div>
             </div>
 
-            <CardHeader>
-                <CardTitle className="text-xl text-navy-900">{product.name}</CardTitle>
+            <CardContent className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1 text-gray-600">
+                    <div className="flex items-center gap-1 text-gray-600 text-sm">
                         <MapPin className="w-4 h-4" />
-                        <span className="text-sm">{product.location}</span>
+                        <span className="truncate">{product.location}</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm font-medium">
-                            {product.rating?.toFixed(1) || "4.5"}
+                    <div className="flex items-center gap-1 text-yellow-500">
+                        <Star className="w-4 h-4 fill-current" />
+                        <span className="text-sm font-medium text-gray-800">
+                            {product.rating?.toFixed(1) || "4.8"}
                         </span>
                     </div>
                 </div>
-            </CardHeader>
 
-            <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="space-y-2 border-t pt-3 text-sm text-gray-700">
                     <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-teal-600" />
-                        <span>{product.spaDetails?.durationMinutes}</span>
+                        <Clock className="w-4 h-4 text-teal-600" />
+                        <span className="font-medium">{product.spaDetails?.durationMinutes}분 프로그램</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-teal-600" />
+                        <span className="truncate">
+                           {(product.spaDetails?.treatmentOptions ?? []).slice(0, 2).join(", ")}
+                        </span>
                     </div>
                 </div>
 
-                <div>
-                    <h4 className="font-semibold text-navy-900 mb-2">트리트먼트</h4>
-                    <div className="space-y-1">
-                        {(product.spaDetails?.treatmentOptions || []).slice(0, 6).map((treatment, index) => (
-                            <p key={index} className="text-sm text-gray-600">• {treatment}</p>
-                        ))}
-                        {product.spaDetails?.treatmentOptions && product.spaDetails.treatmentOptions.length > 6 && (
-                            <p className="text-sm text-teal-600">
-                                외 {product.spaDetails.treatmentOptions.length - 6}개 트리트먼트
+                <div className="flex justify-between items-end pt-2">
+                    <div>
+                        {hasDiscount && (
+                            <p className="text-sm text-gray-500 line-through">
+                                {product.originalPrice.toLocaleString()}원
                             </p>
                         )}
-                    </div>
-                </div>
-
-                <div>
-                    <h4 className="font-semibold text-navy-900 mb-2">시설</h4>
-                    <div className="flex flex-wrap gap-1">
-                        {(product.spaDetails?.facilities || []).slice(0, 4).map((facility) => (
-                            <Badge key={facility} variant="outline" className="text-xs">{facility}</Badge>
-                        ))}
-                        {product.spaDetails?.facilities && product.spaDetails.facilities.length > 4 && (
-                            <Badge variant="outline" className="text-xs">
-                                +{product.spaDetails.facilities.length - 4}개
-                            </Badge>
-                        )}
-                    </div>
-                </div>
-
-                <div>
-                    <h4 className="font-semibold text-navy-900 mb-2">포함사항</h4>
-                    <div className="flex flex-wrap gap-1">
-                        {(product.includes || []).slice(0, 4).map((item) => (
-                            <Badge key={item} variant="secondary" className="text-xs">{item}</Badge>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="flex justify-between items-end pt-4 border-t">
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-2xl font-bold text-navy-900">{product.salePrice.toLocaleString()}원</span>
-                            <span className="text-sm text-gray-500 line-through">{product.originalPrice.toLocaleString()}원</span>
-                        </div>
-                        <span className="text-sm text-gray-600">1인 기준</span>
+                        <p className="text-xl font-bold text-navy-900">
+                            {product.salePrice.toLocaleString()}원
+                            <span className="text-sm font-normal text-gray-600"> / 1인</span>
+                        </p>
                     </div>
                     <Button asChild className="bg-teal-600 hover:bg-teal-700">
                         <Link href={`/products/${product.id}`}>상세보기</Link>

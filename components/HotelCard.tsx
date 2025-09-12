@@ -1,76 +1,92 @@
-"use client"
-
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import Image from "next/image"
 import Link from "next/link"
 import { Product } from "@/lib/api"
-import { Star, MapPin } from "lucide-react"
+import { Star, MapPin, Wifi, Utensils, ParkingSquare, Dumbbell, Waves, Coffee } from "lucide-react"
 
 interface Props {
     hotel: Product
 }
 
+// 편의시설 매핑
+const amenityMapping: Record<string, { label: string; icon: React.ElementType }> = {
+    wifi: { label: "무료 Wi-Fi", icon: Wifi },
+    조식: { label: "조식 포함", icon: Utensils },
+    주차: { label: "주차 가능", icon: ParkingSquare },
+    수영장: { label: "수영장", icon: Waves },
+    피트니스: { label: "피트니스 센터", icon: Dumbbell },
+    라운지: { label: "라운지", icon: Coffee },
+}
+
 export default function HotelCard({ hotel }: Props) {
+    const hasDiscount = hotel.originalPrice > hotel.salePrice
+    const discountRate = hasDiscount ? Math.round(((hotel.originalPrice - hotel.salePrice) / hotel.originalPrice) * 100) : 0
+
     return (
-        <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-            <div className="flex flex-col md:flex-row">
-                <div className="md:w-2/5">
-                    <Image
-                        src={hotel.imageUrl || "/placeholder.svg"}
-                        alt={hotel.name}
-                        width={400}
-                        height={250}
-                        className="w-full h-64 md:h-full object-cover"
-                    />
-                </div>
-                <div className="md:w-3/5 p-6">
-                    <div className="flex justify-between items-start mb-2">
-                        <h3 className="text-xl font-bold text-navy-900">{hotel.name}</h3>
-                        <div className="flex items-center gap-1">
-                            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                            <span className="font-medium">
-                                {hotel.rating.toFixed(1)}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-1 text-gray-600 mb-3">
-                        <MapPin className="w-4 h-4" />
-                        <span className="text-sm">{hotel.location}</span>
-                    </div>
-
-                    <p className="text-gray-600 mb-4 line-clamp-2">{hotel.description}</p>
-
-                    <div className="flex flex-wrap gap-2 mb-4">
-                        {hotel.includes.slice(0, 4).map((amenity) => (
-                            <Badge key={amenity} variant="secondary" className="text-xs">
-                                {amenity}
-                            </Badge>
-                        ))}
-                    </div>
-
-                    <div className="flex justify-between items-end">
-                        <div>
-                            <div className="flex items-center gap-2">
-                <span className="text-2xl font-bold text-navy-900">
-                  {hotel.salePrice.toLocaleString()}원
-                </span>
-                                {hotel.originalPrice > 0 && (
-                                    <span className="text-sm text-gray-500 line-through">
-                    {hotel.originalPrice.toLocaleString()}원
-                  </span>
-                                )}
-                            </div>
-                            <span className="text-sm text-gray-600">1박 기준</span>
-                        </div>
-                        <Button asChild className="bg-teal-600 hover:bg-teal-700">
-                            <Link href={`/products/${hotel.id}`}>상세보기</Link>
-                        </Button>
-                    </div>
+        <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 group">
+            {/* 이미지 */}
+            <div className="relative">
+                <Image
+                    src={hotel.imageUrl || "/placeholder.svg"}
+                    alt={hotel.name}
+                    width={400}
+                    height={250}
+                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute top-3 left-3 flex gap-2">
+                    <Badge className="bg-navy-900/80 backdrop-blur-sm text-white">
+                        <Star className="w-3 h-3 mr-1 fill-yellow-400 text-yellow-400" />
+                        {hotel.rating.toFixed(1)}
+                    </Badge>
+                    {hasDiscount && <Badge variant="destructive">{discountRate}% OFF</Badge>}
                 </div>
             </div>
+
+            {/* 내용 */}
+            <CardContent className="p-4 space-y-3">
+                <h3 className="text-lg font-bold text-navy-900 truncate">{hotel.name}</h3>
+                <div className="flex items-center gap-1 text-gray-600 text-sm">
+                    <MapPin className="w-4 h-4" />
+                    <span className="truncate">{hotel.location}</span>
+                </div>
+
+                {/* 편의시설 아이콘 + 텍스트 */}
+                <div className="flex flex-wrap gap-3 text-gray-600 border-t pt-3 text-sm">
+                    {hotel.includes.map((inc) => {
+                        const key = Object.keys(amenityMapping).find((k) =>
+                            inc.toLowerCase().includes(k.toLowerCase())
+                        )
+                        if (!key) return null
+                        const AmenityIcon = amenityMapping[key].icon
+                        return (
+                            <div key={inc} className="flex items-center gap-1">
+                                <AmenityIcon className="w-4 h-4" />
+                                <span>{amenityMapping[key].label}</span>
+                            </div>
+                        )
+                    })}
+                </div>
+
+                {/* 가격 */}
+                <div className="flex justify-between items-end pt-2">
+                    <div>
+                        {hasDiscount && (
+                            <p className="text-sm text-gray-500 line-through">
+                                {hotel.originalPrice.toLocaleString()}원
+                            </p>
+                        )}
+                        <p className="text-xl font-bold text-navy-900">
+                            {hotel.salePrice.toLocaleString()}원
+                            <span className="text-sm font-normal text-gray-600"> / 1박</span>
+                        </p>
+                    </div>
+                    <Button asChild className="bg-teal-600 hover:bg-teal-700">
+                        <Link href={`/products/${hotel.id}`}>상세보기</Link>
+                    </Button>
+                </div>
+            </CardContent>
         </Card>
     )
 }

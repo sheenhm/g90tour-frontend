@@ -1,98 +1,78 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, Star, Users, Calendar } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { MapPin, Star, Calendar, Plane, Earth } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Product } from "@/lib/product"
+import { type Product } from "@/lib/product"
 
 export default function TourCard({ product }: { product: Product }) {
+    const hasDiscount = product.originalPrice > product.salePrice;
+
     return (
-        <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+        <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 group">
             <div className="relative">
                 <Image
                     src={product.imageUrl || "/placeholder.svg"}
                     alt={product.name}
                     width={400}
                     height={250}
-                    className="w-full h-64 object-cover"
+                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                <Badge className="absolute top-3 left-3 bg-teal-600 hover:bg-teal-700">{product.tourDetails?.tourType}</Badge>
-                <Badge className="absolute top-3 right-3 bg-navy-600 hover:bg-navy-700">{product.tourDetails?.durationDays}</Badge>
+                <div className="absolute top-3 left-3 flex gap-2">
+                    <Badge className="bg-teal-600/80 backdrop-blur-sm text-white border-teal-500">
+                        {product.tourDetails?.tourType || '패키지'}
+                    </Badge>
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent">
+                    <h3 className="text-lg font-bold text-white truncate">{product.name}</h3>
+                </div>
             </div>
 
-            <CardHeader>
-                <CardTitle className="text-xl text-navy-900">{product.name}</CardTitle>
+            <CardContent className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1 text-gray-600">
+                    <div className="flex items-center gap-1 text-gray-600 text-sm">
                         <MapPin className="w-4 h-4" />
-                        <span className="text-sm">{product.location}</span>
+                        <span className="truncate">{product.location}</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm font-medium">
+                    <div className="flex items-center gap-1 text-yellow-500">
+                        <Star className="w-4 h-4 fill-current" />
+                        <span className="text-sm font-medium text-gray-800">
                             {product.rating?.toFixed(1) || "4.5"}
                         </span>
                     </div>
                 </div>
-            </CardHeader>
 
-            <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="flex items-center gap-3">
+                <div className="space-y-2 border-t pt-3 text-sm text-gray-700">
+                    <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-teal-600" />
-                        <span>{product.tourDetails?.durationDays}</span>
+                        <span className="font-medium">{product.tourDetails?.durationDays} 일정</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <Plane className="w-4 h-4 text-navy-600" />
-                        <span>{product.tourDetails?.departurePlace}</span>
+                    <div className="flex items-center gap-2">
+                        <Plane className="w-4 h-4 text-teal-600" />
+                        <span className="font-medium">{product.tourDetails?.departurePlace} 출발</span>
                     </div>
-                </div>
-
-                <div>
-                    <h4 className="font-semibold text-navy-900 mb-2">주요 도시</h4>
-                    <div className="flex flex-wrap gap-1">
-                        {product.tourDetails?.majorCities.map((city) => (
-                            <Badge key={city} variant="outline" className="text-xs">{city}</Badge>
-                        ))}
+                    <div className="flex items-center gap-2">
+                        <Earth className="w-4 h-4 text-teal-600" />
+                        <span className="truncate">
+                           주요 도시: {(product.tourDetails?.majorCities ?? []).join(", ")}
+                        </span>
                     </div>
                 </div>
 
-                <div>
-                    <h4 className="font-semibold text-navy-900 mb-2">주요 관광지</h4>
-                    <div className="space-y-1">
-                        {product.tourDetails?.majorSpots?.slice(0, 3).map((highlight, index) => (
-                            <p key={index} className="text-sm text-gray-600">• {highlight}</p>
-                        ))}
-                        {(product.tourDetails?.majorSpots?.length ?? 0) > 3 && (
-                            <p className="text-sm text-teal-600">
-                                외 {(product.tourDetails?.majorSpots?.length ?? 0) - 3}개 명소
+                <div className="flex justify-between items-end pt-2">
+                    <div>
+                        {hasDiscount && (
+                            <p className="text-sm text-gray-500 line-through">
+                                {product.originalPrice.toLocaleString()}원
                             </p>
                         )}
-                    </div>
-                </div>
-
-                <div>
-                    <h4 className="font-semibold text-navy-900 mb-2">포함사항</h4>
-                    <div className="flex flex-wrap gap-1">
-                        {product.includes.slice(0, 4).map((item) => (
-                            <Badge key={item} variant="secondary" className="text-xs">{item}</Badge>
-                        ))}
-                        {product.includes.length > 4 && (
-                            <Badge variant="secondary" className="text-xs">+{product.includes.length - 4}개</Badge>
-                        )}
-                    </div>
-                </div>
-
-                <div className="flex justify-between items-end pt-4 border-t">
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-2xl font-bold text-navy-900">{product.salePrice.toLocaleString()}원</span>
-                            <span className="text-sm text-gray-500 line-through">{product.originalPrice.toLocaleString()}원</span>
-                        </div>
-                        <span className="text-sm text-gray-600">1인 기준</span>
+                        <p className="text-xl font-bold text-navy-900">
+                            {product.salePrice.toLocaleString()}원
+                            <span className="text-sm font-normal text-gray-600"> / 1인</span>
+                        </p>
                     </div>
                     <Button asChild className="bg-teal-600 hover:bg-teal-700">
                         <Link href={`/products/${product.id}`}>상세보기</Link>
