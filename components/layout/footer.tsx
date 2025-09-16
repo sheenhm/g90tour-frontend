@@ -78,7 +78,7 @@ export default function Footer() {
                         <div>
                             <h3 className="font-semibold text-white mb-4 text-lg">지사 정보</h3>
                             <div className="space-y-4 not-italic text-gray-300">
-                                <InfoItem icon={MapPin} title="한국 지사" content="서울특별시 강서구 마곡중앙6로 21, 727호" />
+                                <InfoItem icon={MapPin} title="한국 지사" content="서울특별시 강서구 양천로26길 18, 305호" />
                                 <InfoItem icon={MapPin} title="태국 지사" content="P23 Building, Level 10, Soi Sukhumvit 23, Sukhumvit Road, North Klongtoey, Wattana, Bangkok" />
                             </div>
                         </div>
