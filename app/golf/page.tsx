@@ -28,7 +28,7 @@ export default function GolfPage() {
     const [sortBy, setSortBy] = useState("popular")
 
     // Filters
-    const [priceRange, setPriceRange] = useState([0, 3000000])
+    const [priceRange, setPriceRange] = useState([0, 1000000])
     const [difficulty, setDifficulty] = useState<string>("all")
     const [selectedFacilities, setSelectedFacilities] = useState<string[]>([])
 

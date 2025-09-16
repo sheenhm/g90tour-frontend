@@ -33,7 +33,6 @@ export default function HotelsPage() {
 
     // Filters
     const [priceRange, setPriceRange] = useState([0, 1000000])
-    const [starRating, setStarRating] = useState(0)
     const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
 
     const amenityMapping: Record<string, string> = {
@@ -71,14 +70,13 @@ export default function HotelsPage() {
         return hotels
             .filter((hotel) => {
                 const byPrice = hotel.salePrice >= priceRange[0] && hotel.salePrice <= priceRange[1]
-                const byRating = starRating === 0 || Math.round(hotel.rating) >= starRating
                 const byAmenities = selectedAmenities.every((amenity) =>
                     hotel.includes.some(
                         (hotelAmenity) =>
                             hotelAmenity.toLowerCase().includes(amenityMapping[amenity])
                     )
                 )
-                return byPrice && byRating && byAmenities
+                return byPrice && byAmenities
             })
             .sort((a, b) => {
                 switch (sortBy) {
@@ -86,13 +84,11 @@ export default function HotelsPage() {
                         return a.salePrice - b.salePrice
                     case "price-high":
                         return b.salePrice - a.salePrice
-                    case "rating":
-                        return b.rating - a.rating
                     default: // popular
                         return b.id.localeCompare(a.id) // 임시 정렬
                 }
             })
-    }, [hotels, priceRange, starRating, selectedAmenities, sortBy])
+    }, [hotels, priceRange, selectedAmenities, sortBy])
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -179,18 +175,6 @@ export default function HotelsPage() {
                                         <span>{priceRange[1].toLocaleString()}원+</span>
                                     </div>
 
-                                    {/* Star Rating */}
-                                    <div className="space-y-4">
-                                        <Label>호텔 등급</Label>
-                                        <div className="flex gap-2">
-                                            {[1, 2, 3, 4, 5].map(star => (
-                                                <Button key={star} variant={starRating === star ? 'default' : 'outline'} size="sm" onClick={() => setStarRating(starRating === star ? 0 : star)} className={starRating === star ? "bg-navy-600" : ""}>
-                                                    {star} <Star className="w-3 h-3 ml-1 fill-current" />
-                                                </Button>
-                                            ))}
-                                        </div>
-                                    </div>
-
                                     {/* Amenities */}
                                     <div className="space-y-3">
                                         <Label>편의시설</Label>
@@ -219,7 +203,6 @@ export default function HotelsPage() {
                                         <SelectItem value="popular">인기순</SelectItem>
                                         <SelectItem value="price-low">가격 낮은순</SelectItem>
                                         <SelectItem value="price-high">가격 높은순</SelectItem>
-                                        <SelectItem value="rating">평점순</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

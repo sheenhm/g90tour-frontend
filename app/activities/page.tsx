@@ -27,7 +27,7 @@ export default function ActivitiesPage() {
     const [sortBy, setSortBy] = useState("popular")
 
     // Filters
-    const [priceRange, setPriceRange] = useState([0, 500000])
+    const [priceRange, setPriceRange] = useState([0, 100000])
     const [selectedTypes, setSelectedTypes] = useState<string[]>([])
 
     useEffect(() => {
@@ -104,7 +104,7 @@ export default function ActivitiesPage() {
                                             value={priceRange}
                                             onValueChange={setPriceRange}
                                             min={0}
-                                            max={1000000}
+                                            max={100000}
                                             step={10000}
                                             className="relative flex items-center select-none touch-none w-full h-5"
                                         >
