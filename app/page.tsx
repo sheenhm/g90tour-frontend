@@ -181,7 +181,7 @@ export default function HomePage() {
                     <motion.div
                         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
                         variants={containerVariants}
-                        initial="hidden"
+                        initial="visible"
                         whileInView="visible"
                         viewport={{ once: true, amount: 0.2 }}
                     >
