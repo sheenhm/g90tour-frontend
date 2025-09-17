@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://g90tour-backend-cg0l.onrender.com";
 
 // --- API 클라이언트 설정 ---
 class ApiClient {

@@ -14,7 +14,8 @@ export interface DashboardSummary { totalUsers: number; newUsersLast7Days: numbe
 export interface Booking { bookingId: string; userId: string; customerName: string; productId: string; productName: string; travelDate: string; counts: number; originalPrice: number; discountedAmount: number; totalPrice: number; status: "QUOTE_REQUESTED" | "PAYMENT_PENDING" | "PAYMENT_COMPLETED" | "TRAVEL_COMPLETED" | "CANCEL_PENDING" | "CANCELLED"; specialRequests?: string; createdAt: string; memoForAdmin: string;}
 export interface BookingSearchParams { status?: Booking["status"]; query?: string; page?: number; size?: number; sort?: string; }
 export interface AdminUsersPageResponse extends PagedResponse<User> {}
-export type CouponType = "AMOUNT" | "RATE";
+export interface AdminCouponsPageResponse extends PagedResponse<Coupon> {}
+export type CouponType = "FIXED_AMOUNT" | "PERCENTAGE";
 export interface Coupon { id: number; code: string; description: string; discountType: CouponType; discountAmount?: number; discountRate?: number; maxDiscountAmount?: number; status: string; expiryDate: string; }
 export interface UserCoupon { userCouponId: number; code: string; description: string; discountType: CouponType; discountAmount?: number; discountRate?: number; maxDiscountAmount?: number; expiryDate: string; isUsed: boolean; usedAt?: string; }
 export interface CouponCreateRequest { description: string; discountType: CouponType; discountAmount?: number; discountRate?: number; maxDiscountAmount?: number; expiryDate: string; }
@@ -73,11 +74,10 @@ export const adminFileApi = {
 
 export const adminCouponApi = {
     issue: (coupon: CouponCreateRequest) => apiClient.post<Coupon>("/api/v1/admin/coupons", coupon),
-    getAll: () => apiClient.get<Coupon[]>("/api/v1/admin/coupons"),
+    getAll: (page = 0, size = 20) => apiClient.get<AdminCouponsPageResponse>(`/api/v1/admin/coupons?page=${page}&size=${size}`),
     revoke: (couponId: number) => apiClient.patch(`/api/v1/admin/coupons/${couponId}/revoke`),
-    grantToUser: (userId: string, couponId: number) =>
-        apiClient.post<UserCoupon>("/api/v1/admin/users/coupons", { userId, couponId }),
-    getUserCoupons: (userId: string) => apiClient.get<UserCoupon[]>(`/api/v1/admin/users/${userId}/coupons`),
+    grantToUser: (userId: string, couponId: number) => apiClient.post<UserCoupon>("/api/v1/admin/users/coupons", { userId, couponId }),
+    getUserCoupons: (userId: string, page = 0, size = 20) => apiClient.get<PagedResponse<UserCoupon>>(`/api/v1/admin/users/${userId}/coupons?page=${page}&size=${size}`),
     revokeFromUser: (userCouponId: number) => apiClient.delete(`/api/v1/admin/users/coupons/${userCouponId}`),
 };
 
