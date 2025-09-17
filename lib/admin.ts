@@ -17,11 +17,11 @@ export interface AdminUsersPageResponse extends PagedResponse<User> {}
 export interface AdminCouponsPageResponse extends PagedResponse<Coupon> {}
 export type CouponType = "FIXED_AMOUNT" | "PERCENTAGE";
 export interface Coupon { id: number; code: string; description: string; discountType: CouponType; discountAmount?: number; discountRate?: number; maxDiscountAmount?: number; status: string; expiryDate: string; }
-export interface UserCoupon { userCouponId: number; code: string; description: string; discountType: CouponType; discountAmount?: number; discountRate?: number; maxDiscountAmount?: number; expiryDate: string; isUsed: boolean; usedAt?: string; }
+export interface UserCoupon { userCouponId: number; isUsed: boolean; usedAt?: string; coupon: { id: number; description: string; discountType: CouponType; discountAmount?: number; discountRate?: number; maxDiscountAmount?: number; status: string; expiryDate: string; }; }
 export interface CouponCreateRequest { description: string; discountType: CouponType; discountAmount?: number; discountRate?: number; maxDiscountAmount?: number; expiryDate: string; }
 export interface CouponGrantRequest { userId: string; couponId: number; }
-export type InquiryStatus = "PENDING" | "RESPONDED" | "CLOSED";
-export interface Inquiry { id: number; userName?: string; title: string; content: string; nonMemberName?: string; nonMemberEmail?: string; nonMemberPhone?: string; status: InquiryStatus; response?: string; respondedAt?: string; createdAt: string; }
+export type InquiryStatus = "UNANSWERED" | "ANSWERED" | "CLOSED";
+export interface Inquiry { id: number; userName?: string; title: string; content: string; nonMemberName?: string; nonMemberEmail?: string; nonMemberPhone?: string; status: InquiryStatus; response?: string; respondedAt?: string; createdAt: string; category: string; }
 export interface InquiryResponseRequest { response: string; }
 export interface InquiryCreateRequest { title: string; content: string; nonMemberName?: string; nonMemberEmail?: string; nonMemberPhone?: string; category?: string; }
 export interface Faq { id: number; question: string; answer: string; category?: string; }
@@ -77,7 +77,7 @@ export const adminCouponApi = {
     getAll: (page = 0, size = 20) => apiClient.get<AdminCouponsPageResponse>(`/api/v1/admin/coupons?page=${page}&size=${size}`),
     revoke: (couponId: number) => apiClient.patch(`/api/v1/admin/coupons/${couponId}/revoke`),
     grantToUser: (userId: string, couponId: number) => apiClient.post<UserCoupon>("/api/v1/admin/users/coupons", { userId, couponId }),
-    getUserCoupons: (userId: string, page = 0, size = 20) => apiClient.get<PagedResponse<UserCoupon>>(`/api/v1/admin/users/${userId}/coupons?page=${page}&size=${size}`),
+    getUserCoupons: (userId: string, page = 0, size = 20) => apiClient.get<UserCoupon[]>(`/api/v1/admin/users/${userId}/coupons?page=${page}&size=${size}`),
     revokeFromUser: (userCouponId: number) => apiClient.delete(`/api/v1/admin/users/coupons/${userCouponId}`),
 };
 
