@@ -199,12 +199,15 @@ export const fileApi = {
 // --- Traveler API ---
 export const travelerApi = {
     addTraveler: (bookingId: string, data: TravelerRequest): Promise<TravelerResponse> => {
-        return apiClient.post(`/api/bookings/${bookingId}/travelers`, data);
+        return apiClient.post(`/api/v1/bookings/${bookingId}/travelers`, data);
     },
     getTravelers: (bookingId: string): Promise<TravelerResponse[]> => {
-        return apiClient.get(`/api/bookings/${bookingId}/travelers`);
+        return apiClient.get(`/api/v1/bookings/${bookingId}/travelers`);
+    },
+    updateTraveler: (bookingId: string, travelerId: string, data: TravelerRequest): Promise<TravelerResponse> => {
+        return apiClient.put(`/api/v1/bookings/${bookingId}/travelers/${travelerId}`, data);
     },
     removeTraveler: (bookingId: string, travelerId: string): Promise<void> => {
-        return apiClient.delete(`/api/bookings/${bookingId}/travelers/${travelerId}`);
+        return apiClient.delete(`/api/v1/bookings/${bookingId}/travelers/${travelerId}`);
     },
 };
