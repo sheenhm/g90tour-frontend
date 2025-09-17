@@ -217,7 +217,7 @@ export default function AdminNoticesPage() {
 
     // --- 메인 렌더링 ---
     return (
-        <div>
+        <div className="min-h-screen bg-gray-50/50 p-4 sm:p-6 space-y-6">
             <div className="flex justify-between items-center mb-8">
                 <div>
                     <h1 className="text-3xl font-bold text-navy-900">공지사항 관리</h1>
