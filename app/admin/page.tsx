@@ -4,9 +4,9 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Users, Package, Calendar, DollarSign, Eye } from "lucide-react"
+import { Users, Package, Calendar, DollarSign, Eye, LucideIcon, ArrowUpRight, ArrowDownRight } from "lucide-react"
 import Link from "next/link"
-import {adminDashboardApi, DashboardSummary, Booking, TopProduct, adminBookingApi} from "@/lib/admin"
+import { adminDashboardApi, DashboardSummary, Booking, TopProduct, adminBookingApi } from "@/lib/admin"
 import { Skeleton } from "@/components/ui/skeleton"
 
 const quickActions = [
@@ -64,10 +64,33 @@ export default function AdminPage() {
                         ))
                     ) : (
                         <>
-                            <StatCard title="총 회원수" value={`${summary?.totalUsers}명`} change={`+${summary?.newUsersLast7Days}명`} icon={Users} color="text-blue-600" />
-                            <StatCard title="총 예약" value={`${summary?.totalBookings}건`} change={`+${summary?.newBookingsLast7Days}건`} icon={Calendar} color="text-green-600" />
-                            <StatCard title="총 매출" value={`${summary?.totalRevenue.toLocaleString()}원`} change={`+${summary?.revenueLast7Days.toLocaleString()}원`} icon={DollarSign} color="text-purple-600" />
-                            <StatCard title="판매 중인 상품" value={`${summary?.activeProducts}개`} icon={Package} color="text-orange-600" />
+                            <StatCard
+                                title="총 회원수"
+                                value={`${summary?.totalUsers ?? 0}명`}
+                                change={summary?.newUsersLast7Days}
+                                icon={Users}
+                                color="text-blue-600"
+                            />
+                            <StatCard
+                                title="총 예약"
+                                value={`${summary?.totalBookings ?? 0}건`}
+                                change={summary?.newBookingsLast7Days}
+                                icon={Calendar}
+                                color="text-green-600"
+                            />
+                            <StatCard
+                                title="총 매출"
+                                value={`${(summary?.totalRevenue ?? 0).toLocaleString()}원`}
+                                change={summary?.revenueLast7Days}
+                                icon={DollarSign}
+                                color="text-purple-600"
+                            />
+                            <StatCard
+                                title="판매 중인 상품"
+                                value={`${summary?.activeProducts ?? 0}개`}
+                                icon={Package}
+                                color="text-orange-600"
+                            />
                         </>
                     )}
                 </div>
@@ -106,8 +129,7 @@ export default function AdminPage() {
                                             </CardContent>
                                         </Card>
                                     </Link>
-                                ))
-                            }
+                                ))}
                         </div>
                     </CardContent>
                 </Card>
@@ -126,12 +148,16 @@ export default function AdminPage() {
                                         <Skeleton key={i} className="h-6 w-full rounded-md" />
                                     ))
                                     : summary?.top5Products.map((product: TopProduct) => (
-                                        <div key={product.productId} className="flex justify-between items-center p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                        <div
+                                            key={product.productId}
+                                            className="flex justify-between items-center p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                                        >
                                             <p className="font-medium text-navy-900">{product.productName}</p>
-                                            <Badge variant="default" className="text-xs">{product.bookingCount} 예약</Badge>
+                                            <Badge variant="default" className="text-xs">
+                                                {product.bookingCount} 예약
+                                            </Badge>
                                         </div>
-                                    ))
-                                }
+                                    ))}
                             </div>
                         </CardContent>
                     </Card>
@@ -146,7 +172,10 @@ export default function AdminPage() {
                             <div className="space-y-4">
                                 {isLoading
                                     ? Array.from({ length: 4 }).map((_, i) => (
-                                        <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <div
+                                            key={i}
+                                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                                        >
                                             <div className="space-y-1">
                                                 <Skeleton className="h-4 w-32" />
                                                 <Skeleton className="h-3 w-24" />
@@ -158,20 +187,28 @@ export default function AdminPage() {
                                         </div>
                                     ))
                                     : bookings.map((booking) => (
-                                        <div key={booking.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                        <div
+                                            key={booking.bookingId}
+                                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                                        >
                                             <div>
                                                 <p className="font-medium text-navy-900">{booking.customerName}</p>
                                                 <p className="text-sm text-gray-600">{booking.productName}</p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="font-medium text-navy-900">{booking.totalPrice.toLocaleString()}원</p>
+                                                <p className="font-medium text-navy-900">
+                                                    {booking.totalPrice.toLocaleString()}원
+                                                </p>
                                                 <Badge
                                                     variant={
-                                                        booking.status === "PAYMENT_COMPLETED" || booking.status === "TRAVEL_COMPLETED"
+                                                        booking.status === "PAYMENT_COMPLETED" ||
+                                                        booking.status === "TRAVEL_COMPLETED"
                                                             ? "default"
-                                                            : booking.status === "PAYMENT_PENDING" || booking.status === "QUOTE_REQUESTED"
+                                                            : booking.status === "PAYMENT_PENDING" ||
+                                                            booking.status === "QUOTE_REQUESTED"
                                                                 ? "secondary"
-                                                                : booking.status === "CANCEL_PENDING" || booking.status === "CANCELLED"
+                                                                : booking.status === "CANCEL_PENDING" ||
+                                                                booking.status === "CANCELLED"
                                                                     ? "destructive"
                                                                     : "default"
                                                     }
@@ -193,10 +230,12 @@ export default function AdminPage() {
                                                 </Badge>
                                             </div>
                                         </div>
-                                    ))
-                                }
+                                    ))}
                             </div>
-                            <Button variant="outline" className="w-full mt-4 bg-transparent hover:bg-gray-100 transition-colors">
+                            <Button
+                                variant="outline"
+                                className="w-full mt-4 bg-transparent hover:bg-gray-100 transition-colors"
+                            >
                                 <Eye className="w-4 h-4 mr-2" />
                                 전체 예약 보기
                             </Button>
@@ -208,17 +247,40 @@ export default function AdminPage() {
     )
 }
 
-function StatCard({ title, value, change, icon: Icon, color }: any) {
+type StatCardProps = {
+    title: string
+    value?: string
+    change?: number
+    icon: LucideIcon
+    color: string
+}
+
+function StatCard({ title, value, change, icon: Icon, color }: StatCardProps) {
+    const isPositive = change !== undefined && change >= 0
+
     return (
         <Card className="hover:shadow-lg transition-shadow">
             <CardContent className="p-6 flex items-center justify-between">
                 <div>
                     <p className="text-sm font-medium text-gray-600">{title}</p>
-                    {value === undefined ? <Skeleton className="h-8 w-20 mt-1" /> : <p className="text-2xl font-bold text-navy-900">{value}</p>}
-                    {change && (
-                        <p className={`text-sm ${change.startsWith("+") ? "text-green-600" : "text-red-600"}`}>
-                            {change} 지난 주 대비
-                        </p>
+                    {value === undefined ? (
+                        <Skeleton className="h-8 w-20 mt-1" />
+                    ) : (
+                        <p className="text-2xl font-bold text-navy-900">{value}</p>
+                    )}
+                    {change !== undefined && (
+                        change === 0 ? (
+                            <p className="text-sm text-gray-500">변동 없음</p>
+                        ) : (
+                            <p className={`flex items-center text-sm ${isPositive ? "text-green-600" : "text-red-600"}`}>
+                                {isPositive ? (
+                                    <ArrowUpRight className="w-4 h-4 mr-1" />
+                                ) : (
+                                    <ArrowDownRight className="w-4 h-4 mr-1" />
+                                )}
+                                {isPositive ? `+${change}` : change} 지난 주 대비
+                            </p>
+                        )
                     )}
                 </div>
                 <Icon className={`w-8 h-8 ${color}`} />
