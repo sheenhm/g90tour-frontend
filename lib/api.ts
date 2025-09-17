@@ -128,6 +128,8 @@ export interface Notice { id: number; title: string; content: string; category: 
 export interface Faq { id: number; question: string; answer: string; category: string; }
 export interface InquiryRequest { category: string; title: string; content: string; nonMemberName?: string; nonMemberEmail?: string; nonMemberPhone?: string; }
 export interface UrlResponse { url: string; }
+export interface TravelerRequest { name: string; nameEngFirst: string; nameEngLast: string; gender: 'MALE' | 'FEMALE'; birth: string; phone: string; passportNumber: string; passportUrl?: string; }
+export interface TravelerResponse { id: string; name: string; nameEngFirst: string; nameEngLast: string; gender: 'MALE' | 'FEMALE'; birth: string; phone: string; passportNumber: string; passportUrl?: string; }
 
 // --- Auth API ---
 export const authApi = {
@@ -152,6 +154,7 @@ export const bookingApi = {
     cancel: (bookingId: string) => apiClient.patch<void>(`/api/v1/bookings/${bookingId}/cancel`),
     getPaymentPage: (bookingId: string) => apiClient.get<PaymentPageResponse>(`/api/v1/bookings/${bookingId}/pay`),
     paymentComplete: (bookingId: string) => apiClient.post<BookingResponse>(`/api/v1/bookings/${bookingId}/pay/complete`),
+    getById: (bookingId: string) => apiClient.get<BookingResponse>(`/api/v1/bookings/${bookingId}`)
 };
 
 // --- MyPage API ---
@@ -190,5 +193,18 @@ export const fileApi = {
     },
     getPresignedUrl: (fileKey: string): Promise<UrlResponse> => {
         return apiClient.get<UrlResponse>(`/api/v1/files/download?fileKey=${encodeURIComponent(fileKey)}`);
+    },
+};
+
+// --- Traveler API ---
+export const travelerApi = {
+    addTraveler: (bookingId: string, data: TravelerRequest): Promise<TravelerResponse> => {
+        return apiClient.post(`/api/bookings/${bookingId}/travelers`, data);
+    },
+    getTravelers: (bookingId: string): Promise<TravelerResponse[]> => {
+        return apiClient.get(`/api/bookings/${bookingId}/travelers`);
+    },
+    removeTraveler: (bookingId: string, travelerId: string): Promise<void> => {
+        return apiClient.delete(`/api/bookings/${bookingId}/travelers/${travelerId}`);
     },
 };
