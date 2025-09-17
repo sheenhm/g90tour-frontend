@@ -1,4 +1,4 @@
-import {apiClient, User, PagedResponse, ProductSearchParams, UrlResponse } from "@/lib/api"
+import {apiClient, User, PagedResponse, ProductSearchParams, UrlResponse, TravelerRequest, TravelerResponse } from "@/lib/api"
 import { Product } from "./product"
 
 const toQueryString = (params: Record<string, any>) =>
@@ -28,6 +28,7 @@ export interface Faq { id: number; question: string; answer: string; category?: 
 export interface FaqCreateRequest { question: string; answer: string; category?: string; }
 export interface Notice { id: number; title: string; content: string; category: string; views: number; createdAt: string; active: boolean; pinned: boolean; }
 export interface NoticeCreateRequest { title: string; content: string; category: string; active: boolean; pinned: boolean; }
+export interface ManualBookingRequest { productId: string; customerName: string; customerPhone: string; travelDate: string; counts: number; }
 
 export const adminDashboardApi = {
     getSummary: () => apiClient.get<DashboardSummary>("/api/v1/admin/dashboard/summary"),
@@ -38,6 +39,8 @@ export const adminBookingApi = {
         apiClient.get<PagedResponse<Booking>>(`/api/v1/admin/bookings/search?${toQueryString(params)}`),
     approve: (bookingId: string) => apiClient.post(`/api/v1/admin/bookings/${bookingId}/approve`),
     confirmCancellation: (bookingId: string) => apiClient.post(`/api/v1/admin/bookings/${bookingId}/confirm-cancellation`),
+    createManualBooking: (data: ManualBookingRequest) => apiClient.post<Booking>("/api/v1/admin/bookings/manual", data),
+    requestTravelerInfo: (bookingId: string, phone: string) => apiClient.post(`/api/v1/admin/bookings/${bookingId}/request-traveler-info`, { phone }),
 };
 
 export const adminQuotationApi = {
@@ -99,4 +102,13 @@ export const adminNoticeApi = {
     create: (data: NoticeCreateRequest) => apiClient.post<Notice>("/api/v1/admin/support/notices", data),
     update: (id: number, data: NoticeCreateRequest) => apiClient.put<Notice>(`/api/v1/admin/support/notices/${id}`, data),
     delete: (id: number) => apiClient.delete(`/api/v1/admin/support/notices/${id}`),
+};
+
+export const adminTravelerApi = {
+    addTraveler: (bookingId: string, data: TravelerRequest) =>
+        apiClient.post<TravelerResponse>(`/api/v1/admin/bookings/${bookingId}/travelers`, data),
+    getTravelers: (bookingId: string) =>
+        apiClient.get<TravelerResponse[]>(`/api/v1/admin/bookings/${bookingId}/travelers`),
+    removeTraveler: (bookingId: string, travelerId: string) =>
+        apiClient.delete(`/api/v1/admin/bookings/${bookingId}/travelers/${travelerId}`),
 };

@@ -1,6 +1,6 @@
 "use client"
 
-import {useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -15,6 +15,7 @@ import {
     ChevronDown,
     ChevronRight,
     Ticket,
+    ClipboardList,
 } from "lucide-react"
 import {adminBookingApi} from "@/lib/admin";
 
@@ -61,6 +62,11 @@ export default function AdminSidebar() {
             badge: quoteRequestCount.toString(),
         },
         {
+            title: "여행자 정보",
+            href: "/admin/travelers",
+            icon: ClipboardList,
+        },
+        {
             title: "회원 관리",
             href: "/admin/users",
             icon: Users,
@@ -78,11 +84,6 @@ export default function AdminSidebar() {
                 { title: "문의 관리", href: "/admin/support/inquiries", badge: "5" },
                 { title: "FAQ 관리", href: "/admin/support/faq" }
             ],
-        },
-        {
-            title: "통계 분석",
-            href: "/admin/analytics",
-            icon: BarChart3,
         },
     ]
 
